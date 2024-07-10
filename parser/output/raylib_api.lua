@@ -134,157 +134,157 @@ return {
     },
     {
       name = "RL_LIGHTGRAY",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 200, 200, 200, 255 }",
       description = "Light Gray"
     },
     {
       name = "RL_GRAY",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 130, 130, 130, 255 }",
       description = "Gray"
     },
     {
       name = "RL_DARKGRAY",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 80, 80, 80, 255 }",
       description = "Dark Gray"
     },
     {
       name = "RL_YELLOW",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 253, 249, 0, 255 }",
       description = "Yellow"
     },
     {
       name = "RL_GOLD",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 255, 203, 0, 255 }",
       description = "Gold"
     },
     {
       name = "RL_ORANGE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 255, 161, 0, 255 }",
       description = "Orange"
     },
     {
       name = "RL_PINK",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 255, 109, 194, 255 }",
       description = "Pink"
     },
     {
       name = "RL_RED",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 230, 41, 55, 255 }",
       description = "Red"
     },
     {
       name = "RL_MAROON",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 190, 33, 55, 255 }",
       description = "Maroon"
     },
     {
       name = "RL_GREEN",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 228, 48, 255 }",
       description = "Green"
     },
     {
       name = "RL_LIME",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 158, 47, 255 }",
       description = "Lime"
     },
     {
       name = "RL_DARKGREEN",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 117, 44, 255 }",
       description = "Dark Green"
     },
     {
       name = "RL_SKYBLUE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 102, 191, 255, 255 }",
       description = "Sky Blue"
     },
     {
       name = "RL_BLUE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 121, 241, 255 }",
       description = "Blue"
     },
     {
       name = "RL_DARKBLUE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 82, 172, 255 }",
       description = "Dark Blue"
     },
     {
       name = "RL_PURPLE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 200, 122, 255, 255 }",
       description = "Purple"
     },
     {
       name = "RL_VIOLET",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 135, 60, 190, 255 }",
       description = "Violet"
     },
     {
       name = "RL_DARKPURPLE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 112, 31, 126, 255 }",
       description = "Dark Purple"
     },
     {
       name = "RL_BEIGE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 211, 176, 131, 255 }",
       description = "Beige"
     },
     {
       name = "RL_BROWN",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 127, 106, 79, 255 }",
       description = "Brown"
     },
     {
       name = "RL_DARKBROWN",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 76, 63, 47, 255 }",
       description = "Dark Brown"
     },
     {
       name = "RL_WHITE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 255, 255, 255, 255 }",
       description = "White"
     },
     {
       name = "RL_BLACK",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 0, 0, 255 }",
       description = "Black"
     },
     {
       name = "RL_BLANK",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 0, 0, 0, 0 }",
       description = "Blank (Transparent)"
     },
     {
       name = "RL_MAGENTA",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 255, 0, 255, 255 }",
       description = "Magenta"
     },
     {
       name = "RL_RAYWHITE",
-      type = "COLOR",
+      type = "UNKNOWN",
       value = "CLITERAL(RL_Color){ 245, 245, 245, 255 }",
       description = "My own White (raylib logo)"
     },
@@ -6429,7 +6429,7 @@ return {
     },
     {
       name = "RL_LoadFontEx",
-      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont",
+      description = "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setRL_Font",
       returnType = "RL_Font",
       params = {
         {type = "const char *", name = "fileName"},

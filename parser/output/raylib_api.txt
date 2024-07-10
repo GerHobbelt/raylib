@@ -113,132 +113,132 @@ Define 022: RL_MATRIX_TYPE
   Description: 
 Define 023: RL_LIGHTGRAY
   Name: RL_LIGHTGRAY
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 200, 200, 200, 255 }
   Description: Light Gray
 Define 024: RL_GRAY
   Name: RL_GRAY
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 130, 130, 130, 255 }
   Description: Gray
 Define 025: RL_DARKGRAY
   Name: RL_DARKGRAY
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 80, 80, 80, 255 }
   Description: Dark Gray
 Define 026: RL_YELLOW
   Name: RL_YELLOW
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 253, 249, 0, 255 }
   Description: Yellow
 Define 027: RL_GOLD
   Name: RL_GOLD
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 255, 203, 0, 255 }
   Description: Gold
 Define 028: RL_ORANGE
   Name: RL_ORANGE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 255, 161, 0, 255 }
   Description: Orange
 Define 029: RL_PINK
   Name: RL_PINK
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 255, 109, 194, 255 }
   Description: Pink
 Define 030: RL_RED
   Name: RL_RED
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 230, 41, 55, 255 }
   Description: Red
 Define 031: RL_MAROON
   Name: RL_MAROON
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 190, 33, 55, 255 }
   Description: Maroon
 Define 032: RL_GREEN
   Name: RL_GREEN
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 228, 48, 255 }
   Description: Green
 Define 033: RL_LIME
   Name: RL_LIME
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 158, 47, 255 }
   Description: Lime
 Define 034: RL_DARKGREEN
   Name: RL_DARKGREEN
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 117, 44, 255 }
   Description: Dark Green
 Define 035: RL_SKYBLUE
   Name: RL_SKYBLUE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 102, 191, 255, 255 }
   Description: Sky Blue
 Define 036: RL_BLUE
   Name: RL_BLUE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 121, 241, 255 }
   Description: Blue
 Define 037: RL_DARKBLUE
   Name: RL_DARKBLUE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 82, 172, 255 }
   Description: Dark Blue
 Define 038: RL_PURPLE
   Name: RL_PURPLE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 200, 122, 255, 255 }
   Description: Purple
 Define 039: RL_VIOLET
   Name: RL_VIOLET
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 135, 60, 190, 255 }
   Description: Violet
 Define 040: RL_DARKPURPLE
   Name: RL_DARKPURPLE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 112, 31, 126, 255 }
   Description: Dark Purple
 Define 041: RL_BEIGE
   Name: RL_BEIGE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 211, 176, 131, 255 }
   Description: Beige
 Define 042: RL_BROWN
   Name: RL_BROWN
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 127, 106, 79, 255 }
   Description: Brown
 Define 043: RL_DARKBROWN
   Name: RL_DARKBROWN
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 76, 63, 47, 255 }
   Description: Dark Brown
 Define 044: RL_WHITE
   Name: RL_WHITE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 255, 255, 255, 255 }
   Description: White
 Define 045: RL_BLACK
   Name: RL_BLACK
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 0, 0, 255 }
   Description: Black
 Define 046: RL_BLANK
   Name: RL_BLANK
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 0, 0, 0, 0 }
   Description: Blank (Transparent)
 Define 047: RL_MAGENTA
   Name: RL_MAGENTA
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 255, 0, 255, 255 }
   Description: Magenta
 Define 048: RL_RAYWHITE
   Name: RL_RAYWHITE
-  Type: COLOR
+  Type: UNKNOWN
   Value: CLITERAL(RL_Color){ 245, 245, 245, 255 }
   Description: My own White (raylib logo)
 Define 049: RL_BOOL_TYPE
@@ -3406,7 +3406,7 @@ Function 386: RL_LoadFont() (1 input parameters)
 Function 387: RL_LoadFontEx() (4 input parameters)
   Name: RL_LoadFontEx
   Return type: RL_Font
-  Description: Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont
+  Description: Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setRL_Font
   Param[1]: fileName (type: const char *)
   Param[2]: fontSize (type: int)
   Param[3]: codepoints (type: int *)
