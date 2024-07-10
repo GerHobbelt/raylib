@@ -25,19 +25,19 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [textures] example - svg loading");
+    RL_InitWindow(screenWidth, screenHeight, "raylib [textures] example - svg loading");
 
     // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
 
-    Image image = LoadImageSvg("resources/test.svg", 400, 350);     // Loaded in CPU memory (RAM)
-    Texture2D texture = LoadTextureFromImage(image);          // Image converted to texture, GPU memory (VRAM)
-    UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
+    RL_Image image = RL_LoadImageSvg("resources/test.svg", 400, 350);     // Loaded in CPU memory (RAM)
+    RL_Texture2D texture = RL_LoadTextureFromImage(image);          // RL_Image converted to texture, GPU memory (VRAM)
+    RL_UnloadImage(image);   // Once image has been converted to texture and uploaded to VRAM, it can be unloaded from RAM
 
-    SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
+    RL_SetTargetFPS(60);     // Set our game to run at 60 frames-per-second
     //---------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!RL_WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
@@ -46,26 +46,26 @@ int main(void)
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
+        RL_BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            RL_ClearBackground(RL_RAYWHITE);
 
-            DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, WHITE);
+            RL_DrawTexture(texture, screenWidth/2 - texture.width/2, screenHeight/2 - texture.height/2, RL_WHITE);
 
             //Red border to illustrate how the SVG is centered within the specified dimensions
-            DrawRectangleLines((screenWidth / 2 - texture.width / 2) - 1, (screenHeight / 2 - texture.height / 2) - 1, texture.width + 2, texture.height + 2, RED);
+            RL_DrawRectangleLines((screenWidth / 2 - texture.width / 2) - 1, (screenHeight / 2 - texture.height / 2) - 1, texture.width + 2, texture.height + 2, RL_RED);
 
-            DrawText("this IS a texture loaded from an SVG file!", 300, 410, 10, GRAY);
+            RL_DrawText("this IS a texture loaded from an SVG file!", 300, 410, 10, RL_GRAY);
 
-        EndDrawing();
+        RL_EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(texture);       // Texture unloading
+    RL_UnloadTexture(texture);       // RL_Texture unloading
 
-    CloseWindow();                // Close window and OpenGL context
+    RL_CloseWindow();                // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
