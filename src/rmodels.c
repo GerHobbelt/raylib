@@ -1131,6 +1131,44 @@ Model LoadModel(const char *fileName)
     return model;
 }
 
+// Load model from files (mesh and material) without Uploading Vertex data to GPU
+Model LoadModelEx(const char *fileName)
+{
+    Model model = { 0 };
+
+#if defined(SUPPORT_FILEFORMAT_OBJ)
+    if (IsFileExtension(fileName, ".obj")) model = LoadOBJ(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_IQM)
+    if (IsFileExtension(fileName, ".iqm")) model = LoadIQM(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_GLTF)
+    if (IsFileExtension(fileName, ".gltf") || IsFileExtension(fileName, ".glb")) model = LoadGLTF(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_VOX)
+    if (IsFileExtension(fileName, ".vox")) model = LoadVOX(fileName);
+#endif
+#if defined(SUPPORT_FILEFORMAT_M3D)
+    if (IsFileExtension(fileName, ".m3d")) model = LoadM3D(fileName);
+#endif
+
+    // Make sure model transform is set to identity matrix!
+    model.transform = MatrixIdentity();
+
+    if (model.materialCount == 0)
+    {
+        TRACELOG(LOG_WARNING, "MATERIAL: [%s] Failed to load model material data, default to white material", fileName);
+
+        model.materialCount = 1;
+        model.materials = (Material *)RL_CALLOC(model.materialCount, sizeof(Material));
+        model.materials[0] = LoadMaterialDefault();
+
+        if (model.meshMaterial == NULL) model.meshMaterial = (int *)RL_CALLOC(model.meshCount, sizeof(int));
+    }
+
+    return model;
+}
+
 // Load model from generated mesh
 // WARNING: A shallow copy of mesh is generated, passed by value,
 // as long as struct contains pointers to data and some values, we get a copy
@@ -1185,6 +1223,17 @@ bool IsModelValid(Model model)
     }
 
     return result;
+}
+
+// Upload model data to GPU (RAM and/or VRAM)
+void UploadModel(const Model *model, bool dynamic)
+{
+    if ((model->meshCount != 0) && (model->meshes != NULL))
+    {
+        // Upload vertex data to GPU (static meshes)
+        for (int i = 0; i < model->meshCount; i++) UploadMesh(&model->meshes[i], false);
+    }
+    else TRACELOG(LOG_WARNING, "Model: [%s] Failed to load model mesh(es) data");
 }
 
 // Unload model (meshes/materials) from memory (RAM and/or VRAM)
@@ -1943,14 +1992,13 @@ bool ExportMesh(Mesh mesh, const char *fileName)
     if (IsFileExtension(fileName, ".obj"))
     {
         // Estimated data size, it should be enough...
-        int vc = mesh.vertexCount;
-        int dataSize = vc*(int)strlen("v -0000.000000f -0000.000000f -0000.000000f\n") +
-                       vc*(int)strlen("vt -0.000000f -0.000000f\n") +
-                       vc*(int)strlen("vn -0.0000f -0.0000f -0.0000f\n") +
-                       mesh.triangleCount*snprintf(NULL, 0, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", vc, vc, vc, vc, vc, vc, vc, vc, vc);
+        int dataSize = mesh.vertexCount*(int)strlen("v 0000.00f 0000.00f 0000.00f") +
+                       mesh.vertexCount*(int)strlen("vt 0.000f 0.00f") +
+                       mesh.vertexCount*(int)strlen("vn 0.000f 0.00f 0.00f") +
+                       mesh.triangleCount*(int)strlen("f 00000/00000/00000 00000/00000/00000 00000/00000/00000");
 
         // NOTE: Text data buffer size is estimated considering mesh data size
-        char *txtData = (char *)RL_CALLOC(dataSize + 1000, sizeof(char));
+        char *txtData = (char *)RL_CALLOC(dataSize*2 + 2000, sizeof(char));
 
         int byteCount = 0;
         byteCount += sprintf(txtData + byteCount, "# //////////////////////////////////////////////////////////////////////////////////\n");
@@ -1970,17 +2018,17 @@ bool ExportMesh(Mesh mesh, const char *fileName)
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            byteCount += sprintf(txtData + byteCount, "v %.6f %.6f %.6f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "v %.2f %.2f %.2f\n", mesh.vertices[v], mesh.vertices[v + 1], mesh.vertices[v + 2]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 2)
         {
-            byteCount += sprintf(txtData + byteCount, "vt %.6f %.6f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
+            byteCount += sprintf(txtData + byteCount, "vt %.3f %.3f\n", mesh.texcoords[v], mesh.texcoords[v + 1]);
         }
 
         for (int i = 0, v = 0; i < mesh.vertexCount; i++, v += 3)
         {
-            byteCount += sprintf(txtData + byteCount, "vn %.4f %.4f %.4f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
+            byteCount += sprintf(txtData + byteCount, "vn %.3f %.3f %.3f\n", mesh.normals[v], mesh.normals[v + 1], mesh.normals[v + 2]);
         }
 
         if (mesh.indices != NULL)
@@ -2000,6 +2048,8 @@ bool ExportMesh(Mesh mesh, const char *fileName)
                 byteCount += sprintf(txtData + byteCount, "f %i/%i/%i %i/%i/%i %i/%i/%i\n", v, v, v, v + 1, v + 1, v + 1, v + 2, v + 2, v + 2);
             }
         }
+
+        byteCount += sprintf(txtData + byteCount, "\n");
 
         // NOTE: Text data length exported is determined by '\0' (NULL) character
         success = SaveFileText(fileName, txtData);
@@ -4412,8 +4462,8 @@ static Model LoadOBJ(const char *fileName)
     tinyobj_shapes_free(objShapes, objShapeCount);
     tinyobj_materials_free(objMaterials, objMaterialCount);
 
-    for (int i = 0; i < model.meshCount; i++)
-        UploadMesh(model.meshes + i, true);
+    /*for (int i = 0; i < model.meshCount; i++)
+        UploadMesh(model.meshes + i, true);*/
 
     // Restore current working directory
     if (CHDIR(currentDir) != 0)
