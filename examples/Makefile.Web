@@ -104,7 +104,7 @@ USE_WAYLAND_DISPLAY   ?= FALSE
 BUILD_WEB_ASYNCIFY    ?= TRUE
 BUILD_WEB_SHELL       ?= $(RAYLIB_PATH)/src/shell.html
 BUILD_WEB_HEAP_SIZE   ?= 134217728
-BUILD_WEB_RESOURCES   ?= TRUE
+BUILD_WEB_RESOURCES   ?= FALSE
 BUILD_WEB_RESOURCES_PATH  ?= $(dir $<)resources@resources
 # Use WebGL2 backend (OpenGL 3.0)
 # WARNING: Requires raylib compiled with GRAPHICS_API_OPENGL_ES3
@@ -507,6 +507,7 @@ CORE = \
     core/core_3d_camera_free \
     core/core_3d_camera_mode \
     core/core_3d_camera_split_screen \
+    core/core_3d_fps_controller \
     core/core_3d_picking \
     core/core_automation_events \
     core/core_basic_screen_manager \
@@ -639,6 +640,7 @@ SHADERS = \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
+    shaders/shaders_normal_map \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching \
@@ -699,6 +701,9 @@ core/core_3d_camera_mode: core/core_3d_camera_mode.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_camera_split_screen: core/core_3d_camera_split_screen.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_3d_fps_controller: core/core_3d_fps_controller.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_3d_picking: core/core_3d_picking.c
@@ -915,8 +920,7 @@ textures/textures_logo_raylib: textures/textures_logo_raylib.c
     --preload-file textures/resources/raylib_logo.png@resources/raylib_logo.png
 
 textures/textures_mouse_painting: textures/textures_mouse_painting.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file textures/my_amazing_texture_painting.png@my_amazing_texture_painting.png
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 textures/textures_npatch_drawing: textures/textures_npatch_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1200,6 +1204,14 @@ shaders/shaders_model_shader: shaders/shaders_model_shader.c
 shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
+
+shaders/shaders_normal_map: shaders/shaders_normal_map.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/normalmap.vs@resources/shaders/glsl100/normalmap.vs \
+    --preload-file shaders/resources/shaders/glsl100/normalmap.fs@resources/shaders/glsl100/normalmap.fs \
+    --preload-file shaders/resources/models/plane.glb@resources/models/plane.glb \
+    --preload-file shaders/resources/tiles_diffuse.png@resources/tiles_diffuse.png \
+    --preload-file shaders/resources/tiles_normal.png@resources/tiles_normal.png
 
 shaders/shaders_palette_switch: shaders/shaders_palette_switch.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
