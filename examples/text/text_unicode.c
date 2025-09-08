@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [text] example - unicode text drawing
+*   raylib [text] example - unicode emojis emojis
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -163,7 +163,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode");
+    InitWindow(screenWidth, screenHeight, "raylib [text] example - unicode emojis");
 
     // Load the font resources
     // NOTE: fontAsian is for asian languages,
@@ -248,7 +248,7 @@ int main(void)
                 if (sz.x > 300) { sz.y *= sz.x/300; sz.x = 300; }
                 else if (sz.x < 160) sz.x = 160;
 
-                Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2 * horizontalPadding + sz.x, 2 * verticalPadding + sz.y };
+                Rectangle msgRect = { selectedPos.x - 38.8f, selectedPos.y, 2*horizontalPadding + sz.x, 2*verticalPadding + sz.y };
                 msgRect.y -= msgRect.height;
 
                 // Coordinates for the chat bubble triangle

@@ -7,6 +7,7 @@
 *    - add <example_name>
 *    - rename <old_examples_name> <new_example_name>
 *    - remove <example_name>
+*    - build <example_name>
 *    - validate
 *    - update
 *
@@ -146,11 +147,6 @@ static int UpdateRequiredFiles(void);
 // NOTE 2: Sort examples list on request flag
 static rlExampleInfo *LoadExamplesData(const char *fileName, const char *category, bool sort, int *exCount);
 static void UnloadExamplesData(rlExampleInfo *exInfo);
-
-// Get text lines (by line-breaks '\n')
-// WARNING: It does not copy text data, just returns line pointers 
-static char **LoadTextLines(const char *text, int *count);
-static void UnloadTextLines(char **text);
 
 // Load example info from file header
 static rlExampleInfo *LoadExampleInfo(const char *exFileName);
@@ -374,8 +370,10 @@ int main(int argc, char *argv[])
             {
                 // Verify example exists in collection to be removed
                 char *exColInfo = LoadFileText(exCollectionFilePath);
-                if (TextFindIndex(exColInfo, argv[2]) != -1) // Example in the collection
+                if ((TextFindIndex(exColInfo, argv[2]) != -1) && // Example in the collection
+                    (TextFindIndex(exName, "_") != -1)) // Valid example name
                 {
+
                     strcpy(exName, argv[2]); // Register example name for removal
                     strncpy(exCategory, exName, TextFindIndex(exName, "_"));
                     opCode = OP_BUILD;
@@ -568,15 +566,19 @@ int main(int argc, char *argv[])
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
             // Compile to: raylib.com/examples/<category>/<category>_example_name.js
             //------------------------------------------------------------------------------------------------
+            // WARNING 1: EMSDK_PATH must be set to proper location when calling from GitHub Actions
+            // WARNING 2: raylib.a and raylib.web.a must be available when compiling locally
+#if defined(_WIN32)
             //putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
-            //putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exCategory, exName));
-            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exCategory, exName));
-
+            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#else
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+#endif
             // Update generated .html metadata
-            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            char exHtmlPath[512] = { 0 };
+            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -653,12 +655,16 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
-            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exRecategory, exRename));
-
+#if defined(_WIN32)
+            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+#else
+            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
+#endif
             // Update generated .html metadata
-            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+            char exHtmlPath[512] = { 0 };
+            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
             // Copy results to web side
             FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exRecategory, exRename),
@@ -829,7 +835,7 @@ int main(int argc, char *argv[])
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
 
-            // TODO: Validate: Duplicate entries in collection list?
+            // TODO: Validate: Check duplicate entries in collection list?
 
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
@@ -925,11 +931,11 @@ int main(int argc, char *argv[])
                 {
                     char *exHtmlText = LoadFileText(TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
 
-                    if ((TextFindIndex(exHtmlText, "raylib web game") > -1) ||     // title
+                    if ((TextFindIndex(exHtmlText, "raylib web game") > -1) || // title
                         (TextFindIndex(exHtmlText, "New raylib web videogame, developed using raylib videogames library") > -1) || // description
                         (TextFindIndex(exHtmlText, "https://www.raylib.com/common/raylib_logo.png") > -1) || // image
                         (TextFindIndex(exHtmlText, "https://www.raylib.com/games.html") > -1) || // url
-                        (TextFindIndex(exHtmlText, "https://github.com/raysan5/raylib") > -1)) // source code button
+                        (TextFindIndex(exHtmlText, "https://github.com/raysan5/raylib';") > -1)) // source code button
                     {
                         exInfo->status |= VALID_MISSING_WEB_METADATA;
                     }
@@ -1017,16 +1023,21 @@ int main(int argc, char *argv[])
                         if ((strcmp(exInfo->category, "others") != 0) && // Skipping "others" category
                             ((exInfo->status & VALID_MISSING_WEB_OUTPUT) || (exInfo->status & VALID_MISSING_WEB_METADATA)))
                         {
-                            system(TextFormat("%s/make -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
-                            //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+                            // Build example for PLATFORM_WEB
+                        #if defined(_WIN32)
+                            putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                            system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                        #else
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
+                        #endif
 
                             // Update generated .html metadata
-                            UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                                TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                            char exHtmlPath[512] = { 0 };
+                            strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name)); // WARNING: Cache path for saving
+                            UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exInfo->category, exInfo->name));
 
                             // Copy results to web side
-                            FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exInfo->category, exInfo->name),
-                                TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
+                            FileCopy(exHtmlPath, TextFormat("%s/%s/%s.html", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.data", exBasePath, exInfo->category, exInfo->name),
                                 TextFormat("%s/%s/%s.data", exWebPath, exInfo->category, exInfo->name));
                             FileCopy(TextFormat("%s/%s/%s.wasm", exBasePath, exInfo->category, exInfo->name),
@@ -1035,6 +1046,7 @@ int main(int argc, char *argv[])
                                 TextFormat("%s/%s/%s.js", exWebPath, exInfo->category, exInfo->name));
 
                             exInfo->status &= ~VALID_MISSING_WEB_OUTPUT;
+                            exInfo->status &= ~VALID_MISSING_WEB_METADATA;
                         }
                     }
                 }
@@ -1192,20 +1204,28 @@ int main(int argc, char *argv[])
             if (strcmp(exCategory, "others") != 0) // Skipping "others" category
             {
                 // Build example for PLATFORM_DESKTOP
-                putenv("RAYLIB_DIR=C:\\GitHub\\raylib");
+            #if defined(_WIN32)
+                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                putenv("MAKE=mingw32-make");
-
-                ChangeDirectory(exBasePath);
-                system(TextFormat("%s %s/%s PLATFORM=PLATFORM_DESKTOP -B", getenv("MAKE"), exCategory, exName));
+                //putenv("MAKE=mingw32-make");
+                //ChangeDirectory(exBasePath);
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+            #else       
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+            #endif
 
                 // Build example for PLATFORM_WEB
-                system(TextFormat("%s -f Makefile.Web  %s/%s PLATFORM=PLATFORM_WEB -B", getenv("MAKE"), exCategory, exName));
-                //system(TextFormat("%s/build_example_web.bat %s/%s", exBasePath, exInfo->category, exInfo->name));
+            #if defined(_WIN32)
+                putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            #else
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+            #endif 
 
                 // Update generated .html metadata
-                UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName), 
-                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                char exHtmlPath[512] = { 0 };
+                strcpy(exHtmlPath, TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName)); // WARNING: Cache path for saving
+                UpdateWebMetadata(exHtmlPath, TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
                 // Copy results to web side
                 FileCopy(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -1237,20 +1257,25 @@ int main(int argc, char *argv[])
             printf("////////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
             printf("USAGE:\n\n");
-            printf("    > rexm help|create|add|rename|remove <example_name> [<example_rename>]\n");
+            printf("    > rexm <command> <example_name> [<example_rename>]\n");
 
-            printf("\nOPTIONS:\n\n");
+            printf("\COMMANDS:\n\n");
             printf("    help                          : Provides command-line usage information\n");
             printf("    create <new_example_name>     : Creates an empty example, from internal template\n");
             printf("    add <example_name>            : Add existing example, category extracted from name\n");
             printf("                                    Supported categories: core, shapes, textures, text, models\n");
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
-            printf("    remove <example_name>         : Remove an existing example\n\n");
+            printf("    remove <example_name>         : Remove an existing example\n");
+            printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
+            printf("    validate                      : Validate examples collection, generates report\n");
+            printf("    update                        : Validate and update examples collection, generates report\n\n");
             printf("\nEXAMPLES:\n\n");
             printf("    > rexm add shapes_custom_stars\n");
             printf("        Add and updates new example provided <shapes_custom_stars>\n\n");
             printf("    > rexm rename core_basic_window core_cool_window\n");
             printf("        Renames and updates example <core_basic_window> to <core_cool_window>\n\n");
+            printf("    > rexm update\n");
+            printf("        Validates all examples in collection and updates missing elements\n\n");
         } break;
     }
 
@@ -1708,7 +1733,7 @@ static int FileRename(const char *fileName, const char *fileRename)
 
     if (FileExists(fileName))
     {
-        result = rename(fileName, TextFormat("%s/%s", GetDirectoryPath(fileName), fileRename));
+        result = rename(fileName, fileRename);
     }
     else result = -1;
 
@@ -1743,39 +1768,6 @@ static int FileMove(const char *srcPath, const char *dstPath)
     else result = -1;
 
     return result;
-}
-
-// Load text lines
-static char **LoadTextLines(const char *text, int *count)
-{
-    #define MAX_TEXT_LINES      512
-    #define MAX_TEXT_LINE_LEN   256
-
-    char **lines = (char **)RL_CALLOC(MAX_TEXT_LINES, sizeof(char *));
-    for (int i = 0; i < MAX_TEXT_LINES; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXT_LINE_LEN, 1);
-    int textSize = (int)strlen(text);
-    int k = 0;
-
-    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXT_LINES); i++)
-    {
-        if (text[i] == '\n')
-        {
-            strncpy(lines[k], &text[i - len], len);
-            len = 0;
-            k++;
-        }
-        else len++;
-    }
-
-    *count += k;
-    return lines;
-}
-
-// Unload text lines
-static void UnloadTextLines(char **lines)
-{
-    for (int i = 0; i < MAX_TEXT_LINES; i++) RL_FREE(lines[i]);
-    RL_FREE(lines);
 }
 
 // Get example info from example file header
@@ -1968,7 +1960,7 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount)
                     strncpy(buffer, start, len);
                     buffer[len] = '\0';
 
-                    // TODO: Make sure buffer is a path (and not a Tracelog() text)
+                    // TODO: Make sure buffer is a path (and not a TraceLog() string)
 
                     // Check for known extensions
                     for (int i = 0; i < extCount; i++)
@@ -2168,11 +2160,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char *fileText = LoadFileText(exHtmlPath);
         char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
 
-        char *exText = NULL;                // Example code file, required to get description
-        char **lines = NULL;                // Pointers to example code lines
-        int lineCount = 0;                  // Example code line count
-        int lineLength = 0;                 // Description line length
-
         char exName[64] = { 0 };            // Example name: fileName without extension
         char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
         char exDescription[256] = { 0 };    // Example description: example text line #3
@@ -2182,7 +2169,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         memset(exTitle, 0, 64);
         memset(exDescription, 0, 256);
         memset(exCategory, 0, 16);
-        lineLength = 0;
 
         // Get example name: replace underscore by spaces
         strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
@@ -2193,10 +2179,12 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
 
         // Get example description: copy line #3 from example file
-        exText = LoadFileText(exFilePath);
-        lines = LoadTextLines(exText, &lineCount);
-        for (int i = 0; (lines[2][i] != '\n') && (lines[2][i] != '\r'); i++) lineLength++;
+        char *exText = LoadFileText(exFilePath);
+        int lineCount = 0;
+        char **lines = LoadTextLines(exText, &lineCount);
+        int lineLength = (int)strlen(lines[2]);
         strncpy(exDescription, lines[2] + 4, lineLength - 4);
+        UnloadTextLines(lines);
         UnloadFileText(exText);
 
         // Update example.html required text
@@ -2220,7 +2208,6 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
 
-        UnloadTextLines(lines);
         UnloadFileText(fileText);
     }
 }

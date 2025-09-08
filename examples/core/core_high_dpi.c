@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [core] example - HighDPI
+*   raylib [core] example - high dpi
 *
 *   Example complexity rating: [★☆☆☆] e/4
 *
@@ -29,7 +29,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - highdpi");
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - high dpi");
     SetWindowMinSize(450, 450);
 
     int logicalGridDescY = 120;
@@ -91,7 +91,7 @@ int main(void)
                 int x = (int)(((float)i)/dpiScale.x);
                 if (odd) DrawRectangle(x, pixelGridTop, (int)cellSizePx, pixelGridBottom - pixelGridTop, CLITERAL(Color){ 0, 121, 241, 100 });
 
-                DrawLine(x, pixelGridTop, (int)(((float)i) / dpiScale.x), pixelGridLabelY - 10, GRAY);
+                DrawLine(x, pixelGridTop, (int)(((float)i)/dpiScale.x), pixelGridLabelY - 10, GRAY);
 
                 if ((x - lastTextX) >= minTextSpace)
                 {
