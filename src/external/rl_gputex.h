@@ -141,7 +141,6 @@ RLGPUTEXAPI int rl_save_ktx_to_memory(const char *fileName, void *data, int widt
 
 #endif // RL_GPUTEX_H
 
-
 /***********************************************************************************
 *
 *   RL_GPUTEX IMPLEMENTATION
@@ -586,7 +585,7 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
                                                                                             // KTX 2.0: UInt32 supercompressionScheme - 0 (None), 1 (Crunch CRN), 2 (Zlib DEFLATE)...
         // KTX 2.0 defines additional header elements...
     } ktx_header;
-    
+
     Byte[12] identifier
     UInt32 vkFormat
     UInt32 typeSize
@@ -633,10 +632,10 @@ int rl_save_ktx(const char *file_name, void *data, int width, int height, int fo
     header.faces = 1;
     header.mipmap_levels = mipmaps;         // If it was 0, it means mipmaps should be generated on loading (not for compressed formats)
     header.key_value_data_size = 0;         // No extra data after the header
-    
+
     // TODO: WARNING: Function dependant on rlgl library!
     rlGetGlTextureFormats(format, &header.gl_internal_format, &header.gl_format, &header.gl_type); // rlgl module function
-    
+
     header.gl_base_internal_format = header.gl_format; // TODO: WARNING: KTX 1.1 only
 
     // NOTE: We can save into a .ktx all PixelFormats supported by raylib, including compressed formats like DXT, ETC or ASTC
@@ -948,11 +947,11 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
 {
     // KTX 1.1 uses OpenGL formats on header info but KTX 2.0 uses Vulkan texture formats,
     // if this library is being improved to support KTX 2.0, it requires those formats to be provided -> View list at the end!
-    
+
     /*
-    *glInternalFormat = 0;
-    *glFormat = 0;
-    *glType = 0;
+    *gl_internal_format = 0;
+    *gl_format = 0;
+    *gl_type = 0;
 
     switch (format)
     {
@@ -1021,6 +1020,65 @@ void get_gl_texture_formats(int format, unsigned int *gl_internal_format, unsign
     */
 }
 #endif // RL_GPUTEX_IMPLEMENTATION
+
+/*
+// OpenGL texture data formats
+// NOTE: Those values can be useful for KTX 1.1 saving,
+// probably only the latest OpenGL ones, not the extensions ones
+// So, there is no need to include full OpenGL headers
+#define GL_UNSIGNED_BYTE                      0x1401
+#define GL_UNSIGNED_SHORT_5_6_5               0x8363
+#define GL_UNSIGNED_SHORT_4_4_4_4             0x8033
+#define GL_UNSIGNED_SHORT_5_5_5_1             0x8034
+#define GL_FLOAT                              0x1406
+#define GL_HALF_FLOAT                         0x140b
+#define GL_HALF_FLOAT_ARB                     0x140b
+#define GL_HALF_FLOAT_OES                     0x8d61
+
+#define GL_RED_EXT                            0x1903
+#define GL_RGB                                0x1907
+#define GL_RGBA                               0x1908
+#define GL_LUMINANCE                          0x1909
+#define GL_R8                                 0x8229
+#define GL_RG8                                0x822b
+#define GL_RGB565                             0x8d62
+#define GL_RGB8                               0x8051
+#define GL_RGB5_A1                            0x8057
+#define GL_RGBA4                              0x8056
+#define GL_RGBA8                              0x8058
+#define GL_R16F                               0x822d
+#define GL_RGB16F                             0x881b
+#define GL_RGBA16F                            0x881a
+#define GL_R32F                               0x822e
+#define GL_RGB32F                             0x8815
+#define GL_RGBA32F                            0x8814
+
+#define GL_R32F_EXT                           0x822e
+#define GL_RGB32F_EXT                         0x8815
+#define GL_RGBA32F_EXT                        0x8814
+#define GL_R16F_EXT                           0x822d
+#define GL_RGB16F_EXT                         0x881b
+#define GL_RGBA16F_EXT                        0x881a
+
+// S3TC (DXT) compression
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT       0x83f0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT      0x83f1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT      0x83f2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT      0x83f3
+
+// ETC formats
+#define GL_ETC1_RGB8_OES                      0x8d64
+#define GL_COMPRESSED_RGB8_ETC2               0x9274
+#define GL_COMPRESSED_RGBA8_ETC2_EAC          0x9278
+
+// PVRTC
+#define GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG    0x8c00
+#define GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG   0x8c02
+
+// ASTC
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR       0x93b0
+#define GL_COMPRESSED_RGBA_ASTC_8x8_KHR       0x93b7
+*/
 
 /*
 // Vulkan texture formats
