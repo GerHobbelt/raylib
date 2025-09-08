@@ -1276,7 +1276,7 @@ static int _m3dstbi__do_zlib(_m3dstbi__zbuf *a, char *obuf, int olen, int exp, i
    return _m3dstbi__parse_zlib(a, parse_header);
 }
 
-char *_m3dstbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header)
+char *_m3dstbi_zlib_decode_malloc_guesssize_headerflag(const void *buffer, int len, int initial_size, int *outlen, int parse_header)
 {
    _m3dstbi__zbuf a;
    char *p = (char *) _m3dstbi__malloc(initial_size);
