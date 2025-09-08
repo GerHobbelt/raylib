@@ -1433,7 +1433,7 @@ void DrawMesh(Mesh mesh, Material material, Matrix transform)
     else rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.vertices);
 
     rlEnableStatePointer(GL_TEXTURE_COORD_ARRAY, mesh.texcoords);
-    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormalss);
+    if (mesh.normals) rlEnableStatePointer(GL_VERTEX_ARRAY, mesh.animNormals);
     else rlEnableStatePointer(GL_NORMAL_ARRAY, mesh.normals);
 
     rlEnableStatePointer(GL_COLOR_ARRAY, mesh.colors);
@@ -6623,11 +6623,11 @@ static Model LoadM3D(const char *fileName)
             // Without vertex color (full transparency), we use the default color
             if (model.meshes[k].colors != NULL)
             {
-                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[0]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 0], &m3d->vertex[m3d->face[i].vertex[0]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[1]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 4], &m3d->vertex[m3d->face[i].vertex[1]].color, 4);
-                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xFF000000)
+                if (m3d->vertex[m3d->face[i].vertex[2]].color & 0xff000000)
                     memcpy(&model.meshes[k].colors[l*12 + 8], &m3d->vertex[m3d->face[i].vertex[2]].color, 4);
             }
 
