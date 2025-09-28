@@ -51,11 +51,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}</ProjectGuid>
+    <ProjectGuid>{1FE8758D-7E8A-41F3-9B6D-FD50E9A2A03D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>text_unicode_ranges</RootNamespace>
+    <RootNamespace>text_unicode_emojis</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>text_unicode_ranges</ProjectName>
+    <ProjectName>text_unicode_emojis</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\text\text_unicode_ranges.c" />
+    <ClCompile Include="..\..\..\examples\text\text_unicode_emojis.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />
