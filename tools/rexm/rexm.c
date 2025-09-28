@@ -166,15 +166,23 @@ static char **ScanExampleResources(const char *filePath, int *resPathCount);
 // Clear resource paths scanned
 static void ClearExampleResources(char **resPaths);
 
-// Add VS project (.vcxproj) to existing VS solution (.sln)
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category);
+// Add/remove VS project (.vcxproj) tofrom existing VS solution (.sln)
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category);
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName);
 
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
 static const char *GenerateUUIDv4(void);
 
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info);
 // Update generated Web example .html file metadata
 static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath);
+
+// Get text between two strings
+static char *GetTextBetween(const char *text, const char *begin, const char *end);
+// Replace text between two specific strings
+static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -555,8 +563,8 @@ int main(int argc, char *argv[])
             // Edit: raylib/projects/VS2022/raylib.sln --> Add new example project
             // WARNING: This function uses TextFormat() extensively inside,
             // we must store provided file paths because pointers will be overwriten
-            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-                exVSProjectSolutionFile, exCategory);
+            AddVSProjectToSolution(exVSProjectSolutionFile, 
+                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), exCategory);
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
@@ -631,7 +639,7 @@ int main(int argc, char *argv[])
                 FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName), 
                     TextFormat("%s;%s", exRecategory, exRename));
 
-                // TODO: Move example resources from <src_category>/resources to <dst_category>/resources
+                // TODO: Move example resources from <exCategory>/resources to <exRecategory>/resources
                 // WARNING: Resources can be shared with other examples in the category
 
                 // Edit: Rename example code file (copy and remove)
@@ -675,6 +683,23 @@ int main(int argc, char *argv[])
                 TextFormat("%s/%s/%s.wasm", exWebPath, exRecategory, exRename));
             FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exRecategory, exRename),
                 TextFormat("%s/%s/%s.js", exWebPath, exRecategory, exRename));
+
+            /*
+            // Create GitHub commit with changes (local)
+            putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
+            ChangeDirectory("C:\\GitHub\\raylib");
+            system("git --version");
+            system("git status");
+            system("git add -A");
+            int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
+            ChangeDirectory("C:/GitHub/raylib.com");
+            system("git add -A");
+            result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
+            if (result != 0) LOG("WARNING: Error committing changes\n");
+            //result = system("git push"); // Push to the remote (origin, current branch)
+            //if (result != 0) LOG("WARNING: Error pushing changes\n");
+            */
 
         } break;
         case OP_REMOVE:     // Remove
@@ -746,11 +771,7 @@ int main(int argc, char *argv[])
             FileRemove(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName));
 
             // Edit: raylib/projects/VS2022/raylib.sln --> Remove example project
-            //---------------------------------------------------------------------------
-            // TODO: Remove project from solution
-            //RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exName), 
-            //    TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath));
-            //---------------------------------------------------------------------------
+            RemoveVSProjectFromSolution(TextFormat("%s/../projects/VS2022/raylib.sln", exBasePath), exName);
             
             // Remove: raylib.com/examples/<category>/<category>_example_name.html
             // Remove: raylib.com/examples/<category>/<category>_example_name.data
@@ -795,6 +816,22 @@ int main(int argc, char *argv[])
             int exListLen = (int)strlen(exList);
             strcpy(exListUpdated, exList);
 
+            // Copy examples list into an update list 
+            // NOTE: Checking and removing duplicate entries
+            int lineCount = 0;
+            char **exListLines = LoadTextLines(exList, &lineCount);
+            int exListUpdatedOffset = 0;
+            exListUpdatedOffset = sprintf(exListUpdated, "%s\n", exListLines[0]);
+
+            for (int i = 1; i < lineCount; i++)
+            {
+                if ((TextFindIndex(exListUpdated, exListLines[i]) == -1) ||  (exListLines[i][0] == '#'))
+                    exListUpdatedOffset += sprintf(exListUpdated + exListUpdatedOffset, "%s\n", exListLines[i]);
+                else listUpdated = true;
+            }
+
+            UnloadTextLines(exListLines, lineCount);
+
             for (unsigned int i = 0; i < list.count; i++)
             {
                 if ((strcmp("examples_template", GetFileNameWithoutExt(list.paths[i])) != 0) &&  // HACK: Skip "examples_template"
@@ -834,8 +871,6 @@ int main(int argc, char *argv[])
             // Check all examples in collection [examples_list.txt] -> Source of truth!
             int exCollectionCount = 0;
             rlExampleInfo *exCollection = LoadExamplesData(exCollectionFilePath, "ALL", false, &exCollectionCount);
-
-            // TODO: Validate: Check duplicate entries in collection list?
 
             // Set status information for all examples, using "status" field in the struct
             for (int i = 0; i < exCollectionCount; i++)
@@ -960,7 +995,10 @@ int main(int argc, char *argv[])
                     (strcmp(exInfo->authorGitHub, exInfoHeader->authorGitHub) != 0) ||
                     (exInfo->stars != exInfoHeader->stars) ||
                     (exInfo->verCreated != exInfoHeader->verCreated) ||
-                    (exInfo->verUpdated != exInfoHeader->verUpdated)) exInfo->status |= VALID_INCONSISTENT_INFO;
+                    (exInfo->verUpdated != exInfoHeader->verUpdated))
+                {
+                    exInfo->status |= VALID_INCONSISTENT_INFO;
+                }
 
                 UnloadExampleInfo(exInfoHeader);
             }
@@ -1009,8 +1047,8 @@ int main(int argc, char *argv[])
                         // Add project (.vcxproj) to raylib solution (.sln)
                         if (exInfo->status & VALID_NOT_IN_VCXSOL)
                         {
-                            AddVSProjectToSolution(TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), 
-                                exVSProjectSolutionFile, exInfo->category);
+                            AddVSProjectToSolution(exVSProjectSolutionFile, 
+                                TextFormat("%s/../projects/VS2022/examples/%s.vcxproj", exBasePath, exInfo->name), exInfo->category);
 
                             exInfo->status &= ~VALID_NOT_IN_VCXSOL;
                         }
@@ -1653,7 +1691,7 @@ static rlExampleInfo *LoadExamplesData(const char *fileName, const char *categor
             }
         }
     
-        UnloadTextLines(lines);
+        UnloadTextLines(lines, lineCount);
         UnloadFileText(text);
     }
     
@@ -2011,7 +2049,7 @@ static void ClearExampleResources(char **resPaths)
 //  - "dotnet" tool (C# projects only)
 //  - "devenv" tool (no adding support, only building)
 // It must be done manually editing the .sln file
-static int AddVSProjectToSolution(const char *projFile, const char *slnFile, const char *category)
+static int AddVSProjectToSolution(const char *slnFile, const char *projFile, const char *category)
 {
     int result = 0;
 
@@ -2125,6 +2163,55 @@ static int AddVSProjectToSolution(const char *projFile, const char *slnFile, con
     return result;
 }
 
+// Remove VS project (.vcxproj) to existing VS solution (.sln)
+static int RemoveVSProjectFromSolution(const char *slnFile, const char *exName)
+{
+    int result = 0;
+
+    // Lines to be removed from solution file:
+    //Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_random_values", "examples\core_random_values.vcxproj", "{B332DCA8-3599-4A99-917A-82261BDC27AC}"
+    //EndProject
+    // All lines starting with:
+    //"\t\t{B332DCA8-3599-4A99-917A-82261BDC27AC}."
+
+    char *slnText = LoadFileText(slnFile);
+    char *slnTextUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
+
+    int lineCount = 0;
+    char **lines = LoadTextLines(slnText, &lineCount); // WARNING: Max 512 lines, we need +4000!
+
+    char uuid[38] = { 0 };
+    strcpy(uuid, "ABCDEF00-0123-4567-89AB-000000000012"); // Temp value
+    int textUpdatedOfsset = 0;
+    int exNameLen = strlen(exName);
+
+    for (int i = 0, index = 0; i < lineCount; i++)
+    {
+        index = TextFindIndex(lines[i], exName);
+        if (index > 0)
+        {
+            // Found line with project --> get UUID
+            strncpy(uuid, lines[i] + index + exNameLen*2 + 26, 36);
+            
+            // Skip copying line and also next one
+            i++;
+        }
+        else
+        {
+            if (TextFindIndex(lines[i], uuid) == -1)
+                textUpdatedOfsset += sprintf(slnTextUpdated + textUpdatedOfsset, "%s\n", lines[i]);
+        }
+    }
+
+    SaveFileText(slnFile, slnTextUpdated);
+
+    UnloadTextLines(lines, lineCount);
+    UnloadFileText(slnText);
+    RL_FREE(slnTextUpdated);
+
+    return result;
+}
+
 // Generate unique UUID v4 string 
 // Output format: {9A2F48CC-0DA8-47C0-884E-02E37F9BE6C1} 
 static const char *GenerateUUIDv4(void)
@@ -2151,12 +2238,12 @@ static const char *GenerateUUIDv4(void)
     return uuid;
 }
 
-// Update generated Web example .html file metadata
-static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
+// Update source code header and comments metadata
+static void UpdateSourceMetadata(const char *exSrcPath, const rlExampleInfo *info)
 {
-    if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
+    if (FileExists(exSrcPath) && IsFileExtension(exSrcPath, ".c"))
     {
-        char *fileText = LoadFileText(exHtmlPath);
+        char *fileText = LoadFileText(exSrcPath);
         char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
 
         char exName[64] = { 0 };            // Example name: fileName without extension
@@ -2164,13 +2251,35 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         char exDescription[256] = { 0 };    // Example description: example text line #3
         char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
 
-        memset(exName, 0, 64);
-        memset(exTitle, 0, 64);
-        memset(exDescription, 0, 256);
-        memset(exCategory, 0, 16);
+        // TODO: Update source code metadata
 
+        // Update example header title (line #3 - ALWAYS)
+        // String: "*   raylib [shaders] example - texture drawing"
+
+
+        // Update example complexity rating
+        // String: "*   Example complexity rating: [★★☆☆] 2/4"
+        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Example complexity rating: [", "/4\n");
+
+
+        // Update example creation/update raylib versions
+        // String: "*   Example originally created with raylib 2.0, last time updated with raylib 3.7
+        
+
+        // Update contributors names
+        // String: "*   Example contributed by Contributor Name (@github_user) and reviewed by Ramon Santamaria (@raysan5)"
+        
+
+        // Update copyright message
+        // String: "*   Copyright (c) 2019-2025 Contributor Name (@github_user) and Ramon Santamaria (@raysan5)"
+        fileTextUpdated[0] = TextReplaceBetween(exSrcPath, "★★☆☆] 2", "Copyright (c) ", ")");
+
+        // Update window title
+        //"InitWindow(screenWidth, screenHeight, "raylib [shaders] example - texture drawing");"
+
+        /*
         // Get example name: replace underscore by spaces
-        strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
+        strcpy(exName, GetFileNameWithoutExt(exSrcPath));
         strcpy(exTitle, exName);
         for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
 
@@ -2196,6 +2305,56 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
         fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
         fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
             TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
+        */
+
+        SaveFileText(exSrcPath, fileTextUpdated[5]);
+
+        for (int i = 0; i < 6; i++) { MemFree(fileTextUpdated[i]); fileTextUpdated[i] = NULL; }
+
+        UnloadFileText(fileText);
+    }
+}
+
+// Update generated Web example .html file metadata
+static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
+{
+    if (FileExists(exHtmlPath) && IsFileExtension(exHtmlPath, ".html"))
+    {
+        char *fileText = LoadFileText(exHtmlPath);
+        char *fileTextUpdated[6] = { 0 };   // Pointers to multiple updated text versions
+
+        char exName[64] = { 0 };            // Example name: fileName without extension
+        char exCategory[16] = { 0 };        // Example category: core, shapes, text, textures, models, audio, shaders
+        char exDescription[256] = { 0 };    // Example description: example text line #3
+        char exTitle[64] = { 0 };           // Example title: fileName without extension, replacing underscores by spaces
+
+        // Get example name: replace underscore by spaces
+        strcpy(exName, GetFileNameWithoutExt(exHtmlPath));
+        strcpy(exTitle, exName);
+        for (int i = 0; (i < 256) && (exTitle[i] != '\0'); i++) { if (exTitle[i] == '_') exTitle[i] = ' '; }
+
+        // Get example category from exName: copy until first underscore
+        for (int i = 0; (exName[i] != '_'); i++) exCategory[i] = exName[i];
+
+        // Get example description: copy line #3 from example file
+        char *exText = LoadFileText(exFilePath);
+        int lineCount = 0;
+        char **lines = LoadTextLines(exText, &lineCount);
+        int lineLength = (int)strlen(lines[2]);
+        strncpy(exDescription, lines[2] + 4, lineLength - 4);
+        UnloadTextLines(lines, lineCount);
+        UnloadFileText(exText);
+
+        // Update example.html required text
+        fileTextUpdated[0] = TextReplace(fileText, "raylib web game", exTitle);
+        fileTextUpdated[1] = TextReplace(fileTextUpdated[0], "New raylib web videogame, developed using raylib videogames library", exDescription);
+        fileTextUpdated[2] = TextReplace(fileTextUpdated[1], "https://www.raylib.com/common/raylib_logo.png",
+            TextFormat("https://raw.githubusercontent.com/raysan5/raylib/master/examples/%s/%s.png", exCategory, exName));
+        fileTextUpdated[3] = TextReplace(fileTextUpdated[2], "https://www.raylib.com/games.html",
+            TextFormat("https://www.raylib.com/examples/%s/%s.html", exCategory, exName));
+        fileTextUpdated[4] = TextReplace(fileTextUpdated[3], "raylib - example", TextFormat("raylib - %s", exName)); // og:site_name
+        fileTextUpdated[5] = TextReplace(fileTextUpdated[4], "https://github.com/raysan5/raylib",
+            TextFormat("https://github.com/raysan5/raylib/blob/master/examples/%s/%s.c", exCategory, exName));
 
         SaveFileText(exHtmlPath, fileTextUpdated[5]);
 
@@ -2209,4 +2368,60 @@ static void UpdateWebMetadata(const char *exHtmlPath, const char *exFilePath)
 
         UnloadFileText(fileText);
     }
+}
+
+// Get text between two strings
+// NOTE: Using static string to return result, MAX: 1024 bytes
+static char *GetTextBetween(const char *text, const char *begin, const char *end)
+{
+    #define MAX_TEXT_BETWEEN_SIZE   1024
+
+    static char between[MAX_TEXT_BETWEEN_SIZE] = { 0 };
+    memset(between, 0, MAX_TEXT_BETWEEN_SIZE);
+
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int beginLen = strlen(begin);
+        int endIndex = TextFindIndex(text + beginIndex + beginLen, end);
+
+        if (endIndex > -1)
+        {
+            endIndex += (beginIndex + beginLen);
+            int len = (endIndex - beginIndex - beginLen);
+            if (len < (MAX_TEXT_BETWEEN_SIZE - 1)) strncpy(between, text + beginIndex + beginLen, len);
+            else strncpy(between, text + beginIndex + beginLen, MAX_TEXT_BETWEEN_SIZE - 1);
+        }
+    }
+
+    return between;
+}
+
+// Replace text between two specific strings
+// WARNING: Returned string must be freed by user
+static char *TextReplaceBetween(const char *text, const char *replace, const char *begin, const char *end)
+{
+    char *result = NULL;
+    int beginIndex = TextFindIndex(text, begin);
+
+    if (beginIndex > -1)
+    {
+        int endIndex = TextFindIndex(text + beginIndex, end);
+
+        if (beginIndex > -1)
+        {
+            int textLen = strlen(text);
+            int replaceLen = strlen(replace);
+            int toreplaceLen = (endIndex + beginIndex) - (beginIndex + strlen(begin));
+            result = (char *)RL_CALLOC(textLen + replaceLen - toreplaceLen + 1, sizeof(char));
+
+            int beginLen = strlen(begin);
+            strncpy(result, text, textLen - beginIndex + strlen(begin)); // Copy first text part
+            strncpy(result + textLen - beginIndex + beginLen, replace, replaceLen); // Copy replace
+            strncpy(result + textLen - beginIndex + beginLen + replaceLen, text + beginIndex + toreplaceLen, textLen - endIndex); // Copy end text part
+        }
+    }
+
+    return result;
 }

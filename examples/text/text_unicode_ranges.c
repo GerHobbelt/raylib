@@ -4,7 +4,7 @@
 *
 *   Example complexity rating: [★★★★] 4/4
 *
-*   Example originally created with raylib 2.5, last time updated with raylib 4.0
+*   Example originally created with raylib 5.5, last time updated with raylib 5.6
 *
 *   Example contributed by Vlad Adrian (@demizdor) and reviewed by Ramon Santamaria (@raysan5)
 *
@@ -17,7 +17,7 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>
+#include <stdlib.h>     // Required for: calloc(), free()
 
 //--------------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -199,5 +199,6 @@ static void AddCodepointRange(Font *font, const char *fontPath, int start, int s
 
     UnloadFont(*font);
     *font = LoadFontEx(fontPath, 32, updatedCodepoints, updatedCodepointCount);
+    RL_FREE(updatedCodepoints);
 }
 

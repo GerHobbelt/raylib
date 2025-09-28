@@ -834,7 +834,9 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
     atlas.height = imageSize;  // Atlas bitmap height
 #else
     int paddedFontSize = fontSize + 2*padding;
+
     // No need for a so-conservative atlas generation
+    // NOTE: Multiplying total expected are by 1.2f scale factor
     float totalArea = totalWidth*paddedFontSize*1.2f;
     float imageMinSize = sqrtf(totalArea);
     int imageSize = (int)powf(2, ceilf(logf(imageMinSize)/logf(2)));
@@ -887,7 +889,7 @@ Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyp
                         recs[j].width = 0;
                         recs[j].height = 0;
                     }
-                    break;
+                    break; // Break for() loop, stop processing glyphs
                 }
             }
 
@@ -1446,36 +1448,38 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // Text strings management functions
 //----------------------------------------------------------------------------------
 // Load text as separate lines ('\n')
-// WARNING: There is a limit set for number of lines and line-size
+// NOTE: Returned lines end with null terminator '\0'
 char **LoadTextLines(const char *text, int *count)
 {
-    #define MAX_TEXTLINES_COUNT      512
-    #define MAX_TEXTLINES_LINE_LEN   512
+    int lineCount = 1;
+    int textSize = strlen(text);
 
-    char **lines = (char **)RL_CALLOC(MAX_TEXTLINES_COUNT, sizeof(char *));
-    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) lines[i] = (char *)RL_CALLOC(MAX_TEXTLINES_LINE_LEN, 1);
-    int textSize = (int)strlen(text);
-    int k = 0;
-
-    for (int i = 0, len = 0; (i < textSize) && (k < MAX_TEXTLINES_COUNT); i++)
+    // Text pass to get required line count
+    for (int i = 0; i < textSize; i++)
     {
-        if ((text[i] == '\n') || (len == (MAX_TEXTLINES_LINE_LEN - 1)))
-        {
-            strncpy(lines[k], &text[i - len], len);
-            len = 0;
-            k++;
-        }
-        else len++;
+        if (text[i] == '\n') lineCount++;
     }
 
-    *count += k;
+    char **lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
+    for (int i = 0, l = 0, lineLen = 0; i <= textSize; i++, lineLen++)
+    {
+        if ((text[i] == '\n') || (text[i] == '\0'))
+        {
+            lines[l] = (char *)RL_CALLOC(lineLen + 1, 1);
+            strncpy(lines[l], &text[i - lineLen + 1], lineLen - 1);
+            lineLen = 0;
+            l++;
+        }
+    }
+
+    *count = lineCount;
     return lines;
 }
 
 // Unload text lines
-void UnloadTextLines(char **lines)
+void UnloadTextLines(char **lines, int lineCount)
 {
-    for (int i = 0; i < MAX_TEXTLINES_COUNT; i++) RL_FREE(lines[i]);
+    for (int i = 0; i < lineCount; i++) RL_FREE(lines[i]);
     RL_FREE(lines);
 }
 
