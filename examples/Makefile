@@ -542,9 +542,8 @@ SHAPES = \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_draw_ring \
+    shapes/shapes_circle_sector_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \
@@ -554,6 +553,7 @@ SHAPES = \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_ring_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -577,7 +577,7 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
     textures/textures_raw_data \
-    textures/textures_sprite_anim \
+    textures/textures_sprite_animation \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
@@ -601,16 +601,16 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
-    models/models_animation \
+    models/models_animation_playing \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
-    models/models_cubicmap \
-    models/models_draw_cube_texture \
+    models/models_cubicmap_rendering \
+    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
-    models/models_heightmap \
+    models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
     models/models_loading_m3d \
@@ -629,25 +629,25 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
-    shaders/shaders_deferred_render \
+    shaders/shaders_deferred_rendering \
     shaders/shaders_eratosthenes \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
-    shaders/shaders_hybrid_render \
+    shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
-    shaders/shaders_lightmap \
+    shaders/shaders_lightmap_rendering \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_normal_map \
+    shaders/shaders_normalmap_rendering \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
+    shaders/shaders_raymarching_rendering \
     shaders/shaders_rounded_rectangle \
-    shaders/shaders_shadowmap \
+    shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight \
+    shaders/shaders_spotlight_rendering \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \

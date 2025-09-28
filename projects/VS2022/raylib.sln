@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "others", "others", "{E9D708
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_basic_window", "examples\core_basic_window.vcxproj", "{0981CA98-E4A5-4DF1-987F-A41D09131EFC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_anim", "examples\textures_sprite_anim.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_sprite_animation", "examples\textures_sprite_animation.vcxproj", "{C25D2CC6-80CA-4C8A-BE3B-2E0F4EA5D0CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textures_srcrec_dstrec", "examples\textures_srcrec_dstrec.vcxproj", "{103B292B-049B-4B15-85A1-9F902840DB2C}"
 EndProject
@@ -85,19 +85,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_window_letterbox", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_world_screen", "examples\core_world_screen.vcxproj", "{79417CE2-FEEB-42F0-BC53-62D5267B19B1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation", "examples\models_animation.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_animation_playing", "examples\models_animation_playing.vcxproj", "{AFDDE100-2D36-4749-817D-12E54C56312F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_billboard_rendering", "examples\models_billboard_rendering.vcxproj", "{B7812167-50FB-4934-996F-DF6FE4CBBFDF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_box_collisions", "examples\models_box_collisions.vcxproj", "{39DB56C7-05F8-492C-A8D4-F19E40FECB59}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap", "examples\models_cubicmap.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_cubicmap_rendering", "examples\models_cubicmap_rendering.vcxproj", "{82F3D34B-8DB2-4C6A-98B1-132245DD9D99}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_first_person_maze", "examples\models_first_person_maze.vcxproj", "{CBD6C0F8-8200-4E9A-9D7C-6505A2AA4A62}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_geometric_shapes", "examples\models_geometric_shapes.vcxproj", "{14BA7F98-02CC-4648-9236-676BFF9458AF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap", "examples\models_heightmap.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_heightmap_rendering", "examples\models_heightmap_rendering.vcxproj", "{0859A973-E4FE-4688-8D16-0253163FDE24}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_loading", "examples\models_loading.vcxproj", "{F3412853-2B6A-4334-8CF2-B796CDAE0850}"
 EndProject
@@ -185,11 +185,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_collision_area", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_colors_palette", "examples\shapes_colors_palette.vcxproj", "{D91367C2-2189-4859-A7FE-D2CAB84FA15C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_circle_sector", "examples\shapes_draw_circle_sector.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_circle_sector_drawing", "examples\shapes_circle_sector_drawing.vcxproj", "{33459B4E-1839-4856-BF6B-22480D11FE31}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_rectangle_rounded", "examples\shapes_draw_rectangle_rounded.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rounded_rectangle_drawing", "examples\shapes_rounded_rectangle_drawing.vcxproj", "{48871156-181A-475A-BD8D-200086A09675}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_draw_ring", "examples\shapes_draw_ring.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_ring_drawing", "examples\shapes_ring_drawing.vcxproj", "{C4416DA1-9E62-46BA-9CD3-F8963C79E1A1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_easings_ball_anim", "examples\shapes_easings_ball_anim.vcxproj", "{1C49E35A-2838-49D9-9D5F-4B8134960EF6}"
 EndProject
@@ -217,7 +217,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_palette_switch", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_postprocessing", "examples\shaders_postprocessing.vcxproj", "{7381D91E-5C72-48F0-AAB4-95C9B10D7484}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching", "examples\shaders_raymarching.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_raymarching_rendering", "examples\shaders_raymarching_rendering.vcxproj", "{D36EC43E-B31F-4CF4-8285-93A7A9D90189}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_mesh_instancing", "examples\shaders_mesh_instancing.vcxproj", "{274C0319-7E1E-4188-936B-8DF3331230B3}"
 EndProject
@@ -225,7 +225,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shapes_textures", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_simple_mask", "examples\shaders_simple_mask.vcxproj", "{600C3D4F-0670-4DB4-B30F-520A729053B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight", "examples\shaders_spotlight.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_spotlight_rendering", "examples\shaders_spotlight_rendering.vcxproj", "{11F33A39-74B7-4018-B5F9-CC285A673A8F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_rendering", "examples\shaders_texture_rendering.vcxproj", "{A6F5E35E-B4A7-41B3-853A-75558E6E0715}"
 EndProject
@@ -271,7 +271,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_write_depth", "exam
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_view_depth", "examples\shaders_view_depth.vcxproj", "{DFDE29A7-4F54-455D-B20B-D2BF79D3B3F7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_render", "examples\shaders_hybrid_render.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_hybrid_rendering", "examples\shaders_hybrid_rendering.vcxproj", "{3755E9F4-CB48-4EC3-B561-3B85964EBDEF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_multi", "examples\audio_sound_multi.vcxproj", "{F81C5819-85B4-4D2E-B6DC-104A7634461B}"
 EndProject
@@ -285,9 +285,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_mouse_wheel", "e
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_smooth_pixelperfect", "examples\core_smooth_pixelperfect.vcxproj", "{71DB4284-5B1C-4E86-9AF5-B91542D44A6F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_draw_cube_texture", "examples\models_draw_cube_texture.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_textured_cube", "examples\models_textured_cube.vcxproj", "{4B39E5FC-0A96-4057-9AA5-8D5A52880DA7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_render", "examples\shaders_deferred_render.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_deferred_rendering", "examples\shaders_deferred_rendering.vcxproj", "{88DE5AD6-0074-4A5A-BE22-C840153E35D5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_texture_outline", "examples\shaders_texture_outline.vcxproj", "{A546E75A-5242-46E6-9A9E-6C91554EAB84}"
 EndProject
@@ -301,7 +301,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shapes_rectangle_advanced",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_gpu_skinning", "examples\models_gpu_skinning.vcxproj", "{8245DAD9-D402-4D5C-8F45-32229CD3B263}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap", "examples\shaders_shadowmap.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_shadowmap_rendering", "examples\shaders_shadowmap_rendering.vcxproj", "{41BBCC10-6FDE-48A1-B2E0-A0EC6A668629}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_bone_socket", "examples\models_bone_socket.vcxproj", "{3A7FE53D-35F7-49DC-9C9A-A5204A53523F}"
 EndProject
@@ -325,7 +325,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "models_tesseract_view", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_basic_pbr", "examples\shaders_basic_pbr.vcxproj", "{4DF6D5E4-6796-4257-B466-BCD62DEBBCF8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap", "examples\shaders_lightmap.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_lightmap_rendering", "examples\shaders_lightmap_rendering.vcxproj", "{C54703BF-D68A-480D-BE27-49B62E45D582}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sound_positioning", "examples\audio_sound_positioning.vcxproj", "{9CD8BCAD-F212-4BCC-BA98-899743CE3279}"
 EndProject
@@ -333,7 +333,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_input_virtual_controls
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core_3d_camera_fps", "examples\core_3d_camera_fps.vcxproj", "{6B1A933E-71B8-4C1F-9E79-02D98830E671}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normal_map", "examples\shaders_normal_map.vcxproj", "{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shaders_normalmap_rendering", "examples\shaders_normalmap_rendering.vcxproj", "{6BFF72EA-7362-4A3B-B6E5-9A3655BBBDA3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text_unicode_ranges", "examples\text_unicode_ranges.vcxproj", "{6777EC3C-077C-42FC-B4AD-B799CE55CCE4}"
 EndProject

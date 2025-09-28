@@ -542,9 +542,8 @@ SHAPES = \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_draw_circle_sector \
-    shapes/shapes_draw_rectangle_rounded \
-    shapes/shapes_draw_ring \
+    shapes/shapes_circle_sector_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_easings_ball_anim \
     shapes/shapes_easings_box_anim \
     shapes/shapes_easings_rectangle_array \
@@ -554,6 +553,7 @@ SHAPES = \
     shapes/shapes_logo_raylib_anim \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
+    shapes/shapes_ring_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -577,7 +577,7 @@ TEXTURES = \
     textures/textures_particles_blending \
     textures/textures_polygon_drawing \
     textures/textures_raw_data \
-    textures/textures_sprite_anim \
+    textures/textures_sprite_animation \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
@@ -601,16 +601,16 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
-    models/models_animation \
+    models/models_animation_playing \
     models/models_billboard_rendering \
     models/models_bone_socket \
     models/models_box_collisions \
-    models/models_cubicmap \
-    models/models_draw_cube_texture \
+    models/models_cubicmap_rendering \
+    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
-    models/models_heightmap \
+    models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
     models/models_loading_m3d \
@@ -629,25 +629,25 @@ SHADERS = \
     shaders/shaders_basic_lighting \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
-    shaders/shaders_deferred_render \
+    shaders/shaders_deferred_rendering \
     shaders/shaders_eratosthenes \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
-    shaders/shaders_hybrid_render \
+    shaders/shaders_hybrid_rendering \
     shaders/shaders_julia_set \
-    shaders/shaders_lightmap \
+    shaders/shaders_lightmap_rendering \
     shaders/shaders_mesh_instancing \
     shaders/shaders_model_shader \
     shaders/shaders_multi_sample2d \
-    shaders/shaders_normal_map \
+    shaders/shaders_normalmap_rendering \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
-    shaders/shaders_raymarching \
+    shaders/shaders_raymarching_rendering \
     shaders/shaders_rounded_rectangle \
-    shaders/shaders_shadowmap \
+    shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
     shaders/shaders_simple_mask \
-    shaders/shaders_spotlight \
+    shaders/shaders_spotlight_rendering \
     shaders/shaders_texture_outline \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
@@ -805,13 +805,10 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_circle_sector: shapes/shapes_draw_circle_sector.c
+shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_draw_rectangle_rounded: shapes/shapes_draw_rectangle_rounded.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_draw_ring: shapes/shapes_draw_ring.c
+shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_easings_ball_anim: shapes/shapes_easings_ball_anim.c
@@ -839,6 +836,9 @@ shapes/shapes_rectangle_advanced: shapes/shapes_rectangle_advanced.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
@@ -927,7 +927,7 @@ textures/textures_raw_data: textures/textures_raw_data.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/fudesumi.raw@resources/fudesumi.raw
 
-textures/textures_sprite_anim: textures/textures_sprite_anim.c
+textures/textures_sprite_animation: textures/textures_sprite_animation.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file textures/resources/scarfy.png@resources/scarfy.png
 
@@ -1018,7 +1018,7 @@ text/text_writing_anim: text/text_writing_anim.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile MODELS examples
-models/models_animation: models/models_animation.c
+models/models_animation_playing: models/models_animation_playing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/models/iqm/guy.iqm@resources/models/iqm/guy.iqm \
     --preload-file models/resources/models/iqm/guytex.png@resources/models/iqm/guytex.png \
@@ -1038,12 +1038,12 @@ models/models_bone_socket: models/models_bone_socket.c
 models/models_box_collisions: models/models_box_collisions.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-models/models_cubicmap: models/models_cubicmap.c
+models/models_cubicmap_rendering: models/models_cubicmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
-models/models_draw_cube_texture: models/models_draw_cube_texture.c
+models/models_textured_cube: models/models_textured_cube.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
@@ -1061,7 +1061,7 @@ models/models_gpu_skinning: models/models_gpu_skinning.c
     --preload-file models/resources/shaders/glsl100/skinning.vs@resources/shaders/glsl100/skinning.vs \
     --preload-file models/resources/shaders/glsl100/skinning.fs@resources/shaders/glsl100/skinning.fs
 
-models/models_heightmap: models/models_heightmap.c
+models/models_heightmap_rendering: models/models_heightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/heightmap.png@resources/heightmap.png
 
@@ -1150,7 +1150,7 @@ shaders/shaders_custom_uniform: shaders/shaders_custom_uniform.c
     --preload-file shaders/resources/models/barracks_diffuse.png@resources/models/barracks_diffuse.png \
     --preload-file shaders/resources/shaders/glsl100/swirl.fs@resources/shaders/glsl100/swirl.fs
 
-shaders/shaders_deferred_render: shaders/shaders_deferred_render.c
+shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.vs@resources/shaders/glsl100/gbuffer.vs \
     --preload-file shaders/resources/shaders/glsl100/gbuffer.fs@resources/shaders/glsl100/gbuffer.fs \
@@ -1171,7 +1171,7 @@ shaders/shaders_hot_reloading: shaders/shaders_hot_reloading.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/reload.fs@resources/shaders/glsl100/reload.fs
 
-shaders/shaders_hybrid_render: shaders/shaders_hybrid_render.c
+shaders/shaders_hybrid_rendering: shaders/shaders_hybrid_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/hybrid_raymarch.fs@resources/shaders/glsl100/hybrid_raymarch.fs \
     --preload-file shaders/resources/shaders/glsl100/hybrid_raster.fs@resources/shaders/glsl100/hybrid_raster.fs
@@ -1180,7 +1180,7 @@ shaders/shaders_julia_set: shaders/shaders_julia_set.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/julia_set.fs@resources/shaders/glsl100/julia_set.fs
 
-shaders/shaders_lightmap: shaders/shaders_lightmap.c
+shaders/shaders_lightmap_rendering: shaders/shaders_lightmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/lightmap.vs@resources/shaders/glsl100/lightmap.vs \
     --preload-file shaders/resources/shaders/glsl100/lightmap.fs@resources/shaders/glsl100/lightmap.fs \
@@ -1202,7 +1202,7 @@ shaders/shaders_multi_sample2d: shaders/shaders_multi_sample2d.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/color_mix.fs@resources/shaders/glsl100/color_mix.fs
 
-shaders/shaders_normal_map: shaders/shaders_normal_map.c
+shaders/shaders_normalmap_rendering: shaders/shaders_normalmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/normalmap.vs@resources/shaders/glsl100/normalmap.vs \
     --preload-file shaders/resources/shaders/glsl100/normalmap.fs@resources/shaders/glsl100/normalmap.fs \
@@ -1231,7 +1231,7 @@ shaders/shaders_postprocessing: shaders/shaders_postprocessing.c
     --preload-file shaders/resources/shaders/glsl100/bloom.fs@resources/shaders/glsl100/bloom.fs \
     --preload-file shaders/resources/shaders/glsl100/blur.fs@resources/shaders/glsl100/blur.fs
 
-shaders/shaders_raymarching: shaders/shaders_raymarching.c
+shaders/shaders_raymarching_rendering: shaders/shaders_raymarching_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/raymarching.fs@resources/shaders/glsl100/raymarching.fs
 
@@ -1240,12 +1240,12 @@ shaders/shaders_rounded_rectangle: shaders/shaders_rounded_rectangle.c
     --preload-file shaders/resources/shaders/glsl100/base.vs@resources/shaders/glsl100/base.vs \
     --preload-file shaders/resources/shaders/glsl100/rounded_rectangle.fs@resources/shaders/glsl100/rounded_rectangle.fs
 
-shaders/shaders_shadowmap: shaders/shaders_shadowmap.c
+shaders/shaders_shadowmap_rendering: shaders/shaders_shadowmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
     --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
-    --preload-file shaders/shaders_shadowmap.png@shaders_shadowmap.png
+    --preload-file shaders/shaders_shadowmap_rendering.png@shaders_shadowmap_rendering.png
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1258,7 +1258,7 @@ shaders/shaders_simple_mask: shaders/shaders_simple_mask.c
     --preload-file shaders/resources/plasma.png@resources/plasma.png \
     --preload-file shaders/resources/mask.png@resources/mask.png
 
-shaders/shaders_spotlight: shaders/shaders_spotlight.c
+shaders/shaders_spotlight_rendering: shaders/shaders_spotlight_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/raysan.png@resources/raysan.png \
     --preload-file shaders/resources/shaders/glsl100/spotlight.fs@resources/shaders/glsl100/spotlight.fs
