@@ -1,8 +1,8 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - hybrid rendering
+*   raylib [shaders] example - depth writing
 *
-*   Example complexity rating: [★★★★] 4/4
+*   Example complexity rating: [★★☆☆] 2/4
 *
 *   Example originally created with raylib 4.2, last time updated with raylib 4.2
 *
@@ -18,9 +18,6 @@
 #include "raylib.h"
 
 #include "rlgl.h"
-#include "raymath.h"
-
-#include <math.h>   // Required for: tanf()
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -28,20 +25,12 @@
     #define GLSL_VERSION            100
 #endif
 
-//----------------------------------------------------------------------------------
-// Types and Structures Definition
-//----------------------------------------------------------------------------------
-typedef struct {
-    unsigned int camPos;
-    unsigned int camDir;
-    unsigned int screenCenter;
-} RayLocs;
-
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 // Module Functions Declaration
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
+
 // Unload render texture from GPU memory (VRAM)
 static void UnloadRenderTextureDepthTex(RenderTexture2D target);
 
@@ -55,75 +44,42 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - hybrid rendering");
-
-    // This Shader calculates pixel depth and color using raymarch
-    Shader shdrRaymarch = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raymarch.fs", GLSL_VERSION));
-
-    // This Shader is a standard rasterization fragment shader with the addition of depth writing
-    // You are required to write depth for all shaders if one shader does it
-    Shader shdrRaster = LoadShader(0, TextFormat("resources/shaders/glsl%i/hybrid_raster.fs", GLSL_VERSION));
-
-    // Declare Struct used to store camera locs
-    RayLocs marchLocs = {0};
-
-    // Fill the struct with shader locs
-    marchLocs.camPos = GetShaderLocation(shdrRaymarch, "camPos");
-    marchLocs.camDir = GetShaderLocation(shdrRaymarch, "camDir");
-    marchLocs.screenCenter = GetShaderLocation(shdrRaymarch, "screenCenter");
-
-    // Transfer screenCenter position to shader. Which is used to calculate ray direction
-    Vector2 screenCenter = {.x = screenWidth/2.0f, .y = screenHeight/2.0f};
-    SetShaderValue(shdrRaymarch, marchLocs.screenCenter , &screenCenter , SHADER_UNIFORM_VEC2);
-
-    // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - depth writing");
 
     // Define the camera to look into our 3d world
     Camera camera = {
-        .position = (Vector3){ 0.5f, 1.0f, 1.5f },    // Camera position
+        .position = (Vector3){ 2.0f, 2.0f, 3.0f },    // Camera position
         .target = (Vector3){ 0.0f, 0.5f, 0.0f },      // Camera looking at point
         .up = (Vector3){ 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
         .fovy = 45.0f,                                // Camera field-of-view Y
         .projection = CAMERA_PERSPECTIVE              // Camera projection type
     };
 
-    // Camera FOV is pre-calculated in the camera distance
-    float camDist = 1.0f/(tanf(camera.fovy*0.5f*DEG2RAD));
+    // Load custom render texture with writable depth texture buffer
+    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    // Load depth writing shader
+    // NOTE: The shader inverts the depth buffer by writing into it by `gl_FragDepth = 1 - gl_FragCoord.z;`
+    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/depth_write.fs", GLSL_VERSION));
+    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())        // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
         UpdateCamera(&camera, CAMERA_ORBITAL);
-
-        // Update Camera Postion in the ray march shader
-        SetShaderValue(shdrRaymarch, marchLocs.camPos, &(camera.position), RL_SHADER_UNIFORM_VEC3);
-
-        // Update Camera Looking Vector. Vector length determines FOV
-        Vector3 camDir = Vector3Scale( Vector3Normalize( Vector3Subtract(camera.target, camera.position)) , camDist);
-        SetShaderValue(shdrRaymarch, marchLocs.camDir, &(camDir), RL_SHADER_UNIFORM_VEC3);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-        // Draw into our custom render texture (framebuffer)
+        // Draw into our custom render texture
         BeginTextureMode(target);
             ClearBackground(WHITE);
 
-            // Raymarch Scene
-            rlEnableDepthTest(); // Manually enable Depth Test to handle multiple rendering methods
-            BeginShaderMode(shdrRaymarch);
-                DrawRectangleRec((Rectangle){0,0, (float)screenWidth, (float)screenHeight},WHITE);
-            EndShaderMode();
-
-            // Rasterize Scene
             BeginMode3D(camera);
-                BeginShaderMode(shdrRaster);
+                BeginShaderMode(shader);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, RED);
                     DrawCubeV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, PURPLE);
                     DrawCubeWiresV((Vector3){ 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, DARKGREEN);
@@ -138,6 +94,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
+
             DrawFPS(10, 10);
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -146,8 +103,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadRenderTextureDepthTex(target);
-    UnloadShader(shdrRaymarch);
-    UnloadShader(shdrRaster);
+    UnloadShader(shader);
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -155,9 +111,9 @@ int main(void)
     return 0;
 }
 
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 // Module Functions Definition
-//------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
 // Load custom render texture, create a writable depth texture buffer
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {
@@ -180,7 +136,7 @@ static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
         target.depth.id = rlLoadTextureDepth(width, height, false);
         target.depth.width = width;
         target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
         target.depth.mipmaps = 1;
 
         // Attach color texture and depth texture to FBO
@@ -198,7 +154,7 @@ static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 }
 
 // Unload render texture from GPU memory (VRAM)
-static void UnloadRenderTextureDepthTex(RenderTexture2D target)
+void UnloadRenderTextureDepthTex(RenderTexture2D target)
 {
     if (target.id > 0)
     {

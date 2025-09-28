@@ -81,7 +81,7 @@
             #define Font X11Font        // Hack to fix 'Font' name collision
                                         // The definition and references to the X11 Font type will be replaced by 'X11Font'
                                         // Works as long as the current file consistently references any X11 Font as X11Font
-                                        // Since it is never referenced (as of writting), this does not pose an issue
+                                        // Since it is never referenced (as of writing), this does not pose an issue
     #endif
     
     #if defined(_GLFW_WAYLAND)
@@ -148,8 +148,8 @@ static void CursorEnterCallback(GLFWwindow *window, int enter);                 
 static void JoystickCallback(int jid, int event);                                           // GLFW3 Joystick Connected/Disconnected Callback
 
 // Wrappers used by glfwInitAllocator
-static void *AllocateWrapper(size_t size, void *user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_MALLOC macro
-static void *ReallocateWrapper(void *block, size_t size, void *user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_MALLOC macro
+static void *AllocateWrapper(size_t size, void *user);                                     // GLFW3 GLFWallocatefun, wrapps around RL_CALLOC macro
+static void *ReallocateWrapper(void *block, size_t size, void *user);                      // GLFW3 GLFWreallocatefun, wrapps around RL_REALLOC macro
 static void DeallocateWrapper(void *block, void *user);                                    // GLFW3 GLFWdeallocatefun, wraps around RL_FREE macro
 
 //----------------------------------------------------------------------------------
@@ -1342,7 +1342,7 @@ static void SetDimensionsFromMonitor(GLFWmonitor *monitor)
 static void *AllocateWrapper(size_t size, void *user)
 {
     (void)user;
-    return RL_MALLOC(size);
+    return RL_CALLOC(size, 1);
 }
 static void *ReallocateWrapper(void *block, size_t size, void *user)
 {

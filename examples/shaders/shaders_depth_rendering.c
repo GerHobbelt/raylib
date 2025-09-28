@@ -1,17 +1,17 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - write depth
+*   raylib [shaders] example - depth rendering
 *
-*   Example complexity rating: [★★☆☆] 2/4
+*   Example complexity rating: [★★★☆] 3/4
 *
-*   Example originally created with raylib 4.2, last time updated with raylib 4.2
+*   Example originally created with raylib 5.6-dev, last time updated with raylib 5.6-dev
 *
-*   Example contributed by Buğra Alptekin Sarı (@BugraAlptekinSari) and reviewed by Ramon Santamaria (@raysan5)
+*   Example contributed by Luís Almeida (@luis605) and reviewed by Ramon Santamaria (@raysan5)
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2022-2025 Buğra Alptekin Sarı (@BugraAlptekinSari)
+*   Copyright (c) 2025 Luís Almeida (@luis605)
 *
 ********************************************************************************************/
 
@@ -20,15 +20,15 @@
 #include "rlgl.h"
 
 #if defined(PLATFORM_DESKTOP)
-#define GLSL_VERSION            330
+    #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
-#define GLSL_VERSION            100
+    #define GLSL_VERSION            100
 #endif
 
 //--------------------------------------------------------------------------------------
 // Module Functions Declaration
 //--------------------------------------------------------------------------------------
-// Load custom render texture, create a writable depth texture buffer
+// Load custom render texture with depth texture attached
 static RenderTexture2D LoadRenderTextureDepthTex(int width, int height);
 
 // Unload render texture from GPU memory (VRAM)
@@ -44,24 +44,32 @@ int main(void)
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - write depth");
-
-    // The shader inverts the depth buffer by writing into it by `gl_FragDepth = 1 - gl_FragCoord.z;`
-    Shader shader = LoadShader(0, TextFormat("resources/shaders/glsl%i/write_depth.fs", GLSL_VERSION));
-
-    // Use Customized function to create writable depth texture buffer
-    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - depth rendering");
 
     // Define the camera to look into our 3d world
-    Camera camera = {
-        .position = (Vector3){ 2.0f, 2.0f, 3.0f },    // Camera position
-        .target = (Vector3){ 0.0f, 0.5f, 0.0f },      // Camera looking at point
-        .up = (Vector3){ 0.0f, 1.0f, 0.0f },          // Camera up vector (rotation towards target)
-        .fovy = 45.0f,                                // Camera field-of-view Y
-        .projection = CAMERA_PERSPECTIVE              // Camera projection type
-    };
+    Camera camera = { 0 };
+    camera.position = (Vector3){ 4.0f, 1.0f, 5.0f };
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    camera.fovy = 45.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
 
-    SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+    // Load render texture with a depth texture attached
+    RenderTexture2D target = LoadRenderTextureDepthTex(screenWidth, screenHeight);
+
+    // Load depth shader and get depth texture shader location
+    Shader depthShader = LoadShader(0, TextFormat("resources/shaders/glsl%i/depth_render.fs", GLSL_VERSION));
+    int depthLoc = GetShaderLocation(depthShader, "depthTexture");
+    int flipTextureLoc = GetShaderLocation(depthShader, "flipY");
+    SetShaderValue(depthShader, flipTextureLoc, (int[]){ 1 }, SHADER_UNIFORM_INT); // Flip Y texture
+
+    // Load scene models
+    Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+    Model floor = LoadModelFromMesh(GenMeshPlane(20.0f, 20.0f, 1, 1));
+
+    DisableCursor();  // Limit cursor to relative movement inside the window
+
+    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -69,39 +77,47 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        UpdateCamera(&camera, CAMERA_ORBITAL);
+        UpdateCamera(&camera, CAMERA_FREE);
         //----------------------------------------------------------------------------------
 
         // Draw
         //----------------------------------------------------------------------------------
-        // Draw into our custom render texture (framebuffer)
         BeginTextureMode(target);
             ClearBackground(WHITE);
 
             BeginMode3D(camera);
-                BeginShaderMode(shader);
-                    DrawCubeWiresV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, RED);
-                    DrawCubeV((Vector3){ 0.0f, 0.5f, 1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, PURPLE);
-                    DrawCubeWiresV((Vector3){ 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, DARKGREEN);
-                    DrawCubeV((Vector3) { 0.0f, 0.5f, -1.0f }, (Vector3){ 1.0f, 1.0f, 1.0f }, YELLOW);
-                    DrawGrid(10, 1.0f);
-                EndShaderMode();
+                DrawModel(cube, (Vector3){ 0.0f, 0.0f, 0.0f }, 3.0f, YELLOW);
+                DrawModel(floor, (Vector3){ 10.0f, 0.0f, 2.0f }, 2.0f, RED);
             EndMode3D();
         EndTextureMode();
 
-        // Draw into screen our custom render texture
+        // Draw into screen (main framebuffer)
         BeginDrawing();
             ClearBackground(RAYWHITE);
-            DrawTextureRec(target.texture, (Rectangle) { 0, 0, (float)screenWidth, (float)-screenHeight }, (Vector2) { 0, 0 }, WHITE);
-            DrawFPS(10, 10);
+
+            BeginShaderMode(depthShader);
+                SetShaderValueTexture(depthShader, depthLoc, target.depth);
+                DrawTexture(target.depth, 0, 0, WHITE);
+            EndShaderMode();
+
+            DrawRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
+            DrawRectangleLines( 10, 10, 320, 93, BLUE);
+
+            DrawText("Camera Controls:", 20, 20, 10, BLACK);
+            DrawText("- WASD to move", 40, 40, 10, DARKGRAY);
+            DrawText("- Mouse Wheel Pressed to Pan", 40, 60, 10, DARKGRAY);
+            DrawText("- Z to zoom to (0, 0, 0)", 40, 80, 10, DARKGRAY);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadModel(cube);              // Unload model
+    UnloadModel(floor);             // Unload model
     UnloadRenderTextureDepthTex(target);
-    UnloadShader(shader);
+    UnloadShader(depthShader);      // Unload shader
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -112,9 +128,8 @@ int main(void)
 //--------------------------------------------------------------------------------------
 // Module Functions Definition
 //--------------------------------------------------------------------------------------
-
 // Load custom render texture, create a writable depth texture buffer
-RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
+static RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
 {
     RenderTexture2D target = { 0 };
 
@@ -135,7 +150,7 @@ RenderTexture2D LoadRenderTextureDepthTex(int width, int height)
         target.depth.id = rlLoadTextureDepth(width, height, false);
         target.depth.width = width;
         target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.format = 19;       // DEPTH_COMPONENT_24BIT: Not defined in raylib
         target.depth.mipmaps = 1;
 
         // Attach color texture and depth texture to FBO

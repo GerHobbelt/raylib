@@ -526,9 +526,11 @@ CORE = \
     core/core_input_virtual_controls \
     core/core_random_sequence \
     core/core_random_values \
+    core/core_render_texture \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
     core/core_window_letterbox \
@@ -538,15 +540,14 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_circle_sector_drawing \
-    shapes/shapes_rounded_rectangle_drawing \
-    shapes/shapes_easings_ball_anim \
-    shapes/shapes_easings_box_anim \
-    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_easings_ball \
+    shapes/shapes_easings_box \
+    shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
@@ -554,6 +555,7 @@ SHAPES = \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -593,6 +595,7 @@ TEXT = \
     text/text_font_sdf \
     text/text_font_spritefont \
     text/text_format_text \
+    text/text_inline_styling \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \
@@ -606,7 +609,6 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
-    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
@@ -622,6 +624,7 @@ MODELS = \
     models/models_rlgl_solar_system \
     models/models_skybox_rendering \
     models/models_tesseract_view \
+    models/models_textured_cube \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
 
@@ -630,7 +633,9 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
-    shaders/shaders_eratosthenes \
+    shaders/shaders_depth_rendering \
+    shaders/shaders_depth_writing \
+    shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
@@ -652,9 +657,7 @@ SHADERS = \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_view_depth \
-    shaders/shaders_write_depth
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
@@ -761,6 +764,9 @@ core/core_random_sequence: core/core_random_sequence.c
 core/core_random_values: core/core_random_values.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+core/core_render_texture: core/core_render_texture.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 core/core_scissor_test: core/core_scissor_test.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -768,6 +774,9 @@ core/core_smooth_pixelperfect: core/core_smooth_pixelperfect.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_storage_values: core/core_storage_values.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+core/core_undo_redo: core/core_undo_redo.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 core/core_vr_simulator: core/core_vr_simulator.c
@@ -793,6 +802,9 @@ shapes/shapes_basic_shapes: shapes/shapes_basic_shapes.c
 shapes/shapes_bouncing_ball: shapes/shapes_bouncing_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 shapes/shapes_collision_area: shapes/shapes_collision_area.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -805,19 +817,13 @@ shapes/shapes_digital_clock: shapes/shapes_digital_clock.c
 shapes/shapes_double_pendulum: shapes/shapes_double_pendulum.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_circle_sector_drawing: shapes/shapes_circle_sector_drawing.c
+shapes/shapes_easings_ball: shapes/shapes_easings_ball.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
+shapes/shapes_easings_box: shapes/shapes_easings_box.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
-shapes/shapes_easings_ball_anim: shapes/shapes_easings_ball_anim.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_easings_box_anim: shapes/shapes_easings_box_anim.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-
-shapes/shapes_easings_rectangle_array: shapes/shapes_easings_rectangle_array.c
+shapes/shapes_easings_rectangles: shapes/shapes_easings_rectangles.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_following_eyes: shapes/shapes_following_eyes.c
@@ -839,6 +845,9 @@ shapes/shapes_rectangle_scaling: shapes/shapes_rectangle_scaling.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_ring_drawing: shapes/shapes_ring_drawing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
+shapes/shapes_rounded_rectangle_drawing: shapes/shapes_rounded_rectangle_drawing.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 shapes/shapes_splines_drawing: shapes/shapes_splines_drawing.c
@@ -987,6 +996,9 @@ text/text_font_spritefont: text/text_font_spritefont.c
 text/text_format_text: text/text_format_text.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+text/text_inline_styling: text/text_inline_styling.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
+
 text/text_input_box: text/text_input_box.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1041,10 +1053,6 @@ models/models_box_collisions: models/models_box_collisions.c
 models/models_cubicmap_rendering: models/models_cubicmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap.png@resources/cubicmap.png \
-    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
-
-models/models_textured_cube: models/models_textured_cube.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
 
 models/models_first_person_maze: models/models_first_person_maze.c
@@ -1116,6 +1124,10 @@ models/models_skybox_rendering: models/models_skybox_rendering.c
 models/models_tesseract_view: models/models_tesseract_view.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
+models/models_textured_cube: models/models_textured_cube.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file models/resources/cubicmap_atlas.png@resources/cubicmap_atlas.png
+
 models/models_waving_cubes: models/models_waving_cubes.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
@@ -1157,7 +1169,15 @@ shaders/shaders_deferred_rendering: shaders/shaders_deferred_rendering.c
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.vs@resources/shaders/glsl100/deferred_shading.vs \
     --preload-file shaders/resources/shaders/glsl100/deferred_shading.fs@resources/shaders/glsl100/deferred_shading.fs
 
-shaders/shaders_eratosthenes: shaders/shaders_eratosthenes.c
+shaders/shaders_depth_rendering: shaders/shaders_depth_rendering.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/depth_render.fs@resources/shaders/glsl100/depth_render.fs
+
+shaders/shaders_depth_writing: shaders/shaders_depth_writing.c
+	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
+    --preload-file shaders/resources/shaders/glsl100/depth_write.fs@resources/shaders/glsl100/depth_write.fs
+
+shaders/shaders_eratosthenes_sieve: shaders/shaders_eratosthenes_sieve.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/eratosthenes.fs@resources/shaders/glsl100/eratosthenes.fs
 
@@ -1244,8 +1264,7 @@ shaders/shaders_shadowmap_rendering: shaders/shaders_shadowmap_rendering.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.vs@resources/shaders/glsl100/shadowmap.vs \
     --preload-file shaders/resources/shaders/glsl100/shadowmap.fs@resources/shaders/glsl100/shadowmap.fs \
-    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb \
-    --preload-file shaders/shaders_shadowmap_rendering.png@shaders_shadowmap_rendering.png
+    --preload-file shaders/resources/models/robot.glb@resources/models/robot.glb
 
 shaders/shaders_shapes_textures: shaders/shaders_shapes_textures.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
@@ -1286,14 +1305,6 @@ shaders/shaders_vertex_displacement: shaders/shaders_vertex_displacement.c
 	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.vs@resources/shaders/glsl100/vertex_displacement.vs \
     --preload-file shaders/resources/shaders/glsl100/vertex_displacement.fs@resources/shaders/glsl100/vertex_displacement.fs
-
-shaders/shaders_view_depth: shaders/shaders_view_depth.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/depth.fs@resources/shaders/glsl100/depth.fs
-
-shaders/shaders_write_depth: shaders/shaders_write_depth.c
-	$(CC) -o $@$(EXT) $< $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM) \
-    --preload-file shaders/resources/shaders/glsl100/write_depth.fs@resources/shaders/glsl100/write_depth.fs
 
 # Compile AUDIO examples
 audio/audio_mixed_processor: audio/audio_mixed_processor.c

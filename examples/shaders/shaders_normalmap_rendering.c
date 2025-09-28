@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [shaders] example - normal map
+*   raylib [shaders] example - normalmap rendering
 *
 *   Example complexity rating: [★★★★] 4/4
 *
@@ -18,9 +18,9 @@
 *
 ********************************************************************************************/
 
-#include <raylib.h>
+#include "raylib.h"
 
-#include <raymath.h>
+#include "raymath.h"
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -39,7 +39,7 @@ int main(void)
     const int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);
-    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - normal map");
+    InitWindow(screenWidth, screenHeight, "raylib [shaders] example - normalmap rendering");
 
     Camera camera = { 0 };
     camera.position = (Vector3){ 0.0f, 2.0f, -4.0f };
@@ -155,7 +155,7 @@ int main(void)
             DrawText("Use keys [Up][Down] to change specular exponent", 10, 10 + yOffset*2, 10, BLACK);
             DrawText(TextFormat("Specular Exponent: %.2f", specularExponent), 10, 10 + yOffset*3, 10, BLUE);
 
-            DrawFPS(screenWidth - 80, 10);
+            DrawFPS(screenWidth - 90, 10);
 
         EndDrawing();
         //--------------------------------------------------------------------------------------

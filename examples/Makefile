@@ -526,9 +526,11 @@ CORE = \
     core/core_input_virtual_controls \
     core/core_random_sequence \
     core/core_random_values \
+    core/core_render_texture \
     core/core_scissor_test \
     core/core_smooth_pixelperfect \
     core/core_storage_values \
+    core/core_undo_redo \
     core/core_vr_simulator \
     core/core_window_flags \
     core/core_window_letterbox \
@@ -538,15 +540,14 @@ CORE = \
 SHAPES = \
     shapes/shapes_basic_shapes \
     shapes/shapes_bouncing_ball \
+    shapes/shapes_circle_sector_drawing \
     shapes/shapes_collision_area \
     shapes/shapes_colors_palette \
     shapes/shapes_digital_clock \
     shapes/shapes_double_pendulum \
-    shapes/shapes_circle_sector_drawing \
-    shapes/shapes_rounded_rectangle_drawing \
-    shapes/shapes_easings_ball_anim \
-    shapes/shapes_easings_box_anim \
-    shapes/shapes_easings_rectangle_array \
+    shapes/shapes_easings_ball \
+    shapes/shapes_easings_box \
+    shapes/shapes_easings_rectangles \
     shapes/shapes_following_eyes \
     shapes/shapes_lines_bezier \
     shapes/shapes_logo_raylib \
@@ -554,6 +555,7 @@ SHAPES = \
     shapes/shapes_rectangle_advanced \
     shapes/shapes_rectangle_scaling \
     shapes/shapes_ring_drawing \
+    shapes/shapes_rounded_rectangle_drawing \
     shapes/shapes_splines_drawing \
     shapes/shapes_top_down_lights
 
@@ -593,6 +595,7 @@ TEXT = \
     text/text_font_sdf \
     text/text_font_spritefont \
     text/text_format_text \
+    text/text_inline_styling \
     text/text_input_box \
     text/text_rectangle_bounds \
     text/text_sprite_fonts \
@@ -606,7 +609,6 @@ MODELS = \
     models/models_bone_socket \
     models/models_box_collisions \
     models/models_cubicmap_rendering \
-    models/models_textured_cube \
     models/models_first_person_maze \
     models/models_geometric_shapes \
     models/models_gpu_skinning \
@@ -622,6 +624,7 @@ MODELS = \
     models/models_rlgl_solar_system \
     models/models_skybox_rendering \
     models/models_tesseract_view \
+    models/models_textured_cube \
     models/models_waving_cubes \
     models/models_yaw_pitch_roll
 
@@ -630,7 +633,9 @@ SHADERS = \
     shaders/shaders_basic_pbr \
     shaders/shaders_custom_uniform \
     shaders/shaders_deferred_rendering \
-    shaders/shaders_eratosthenes \
+    shaders/shaders_depth_rendering \
+    shaders/shaders_depth_writing \
+    shaders/shaders_eratosthenes_sieve \
     shaders/shaders_fog_rendering \
     shaders/shaders_hot_reloading \
     shaders/shaders_hybrid_rendering \
@@ -652,9 +657,7 @@ SHADERS = \
     shaders/shaders_texture_rendering \
     shaders/shaders_texture_tiling \
     shaders/shaders_texture_waves \
-    shaders/shaders_vertex_displacement \
-    shaders/shaders_view_depth \
-    shaders/shaders_write_depth
+    shaders/shaders_vertex_displacement
 
 AUDIO = \
     audio/audio_mixed_processor \
