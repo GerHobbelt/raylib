@@ -51,9 +51,9 @@
 
 #include "raylib.h"
 
-#include <stdlib.h>     // Required for: NULL, calloc(), free()
 #include <stdio.h>      // Required for: rename(), remove()
 #include <string.h>     // Required for: strcmp(), strcpy()
+#include <stdlib.h>     // Required for: NULL, calloc(), free()
 
 #define SUPPORT_LOG_INFO
 #if defined(SUPPORT_LOG_INFO) //&& defined(_DEBUG)
@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
                 // Support building/testing not only individual examples but multiple: ALL/<category>
                 int exBuildListInfoCount = 0;
                 rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListInfoCount);
-                    
+
                 for (int i = 0; i < exBuildListInfoCount; i++)
                 {
                     if (!TextIsEqual(exBuildListInfo[i].category, "others"))
@@ -428,9 +428,9 @@ int main(int argc, char *argv[])
                         exBuildListCount++;
                     }
                 }
-                    
+
                 UnloadExampleData(exBuildListInfo);
-                
+
                 if (exBuildListCount == 0) LOG("WARNING: BUILD: Example requested not available in the collection\n");
                 else
                 {
@@ -931,23 +931,28 @@ int main(int argc, char *argv[])
 #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
+#elif defined(PLATFORM_DRM)
+                LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
 #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
 
+#if !defined(PLATFORM_DRM)
                 // Build example for PLATFORM_WEB
                 // Build: raylib.com/examples/<category>/<category>_example_name.html
                 // Build: raylib.com/examples/<category>/<category>_example_name.data
                 // Build: raylib.com/examples/<category>/<category>_example_name.wasm
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
                 system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-#else
+    #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
-#endif
+    #endif
                 // Update generated .html metadata
                 LOG("INFO: [%s] Updating HTML Metadata...\n", TextFormat("%s.html", exName));
                 UpdateWebMetadata(TextFormat("%s/%s/%s.html", exBasePath, exCategory, exName),
@@ -963,6 +968,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.wasm", exWebPath, exCategory, exName));
                 FileCopy(TextFormat("%s/%s/%s.js", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.js", exWebPath, exCategory, exName));
+#endif // !PLATFORM_DRM
 
                 // Once example processed, free memory from list
                 RL_FREE(exBuildList[i]);
@@ -1489,7 +1495,7 @@ int main(int argc, char *argv[])
                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
                 // Skip some examples from building
-                if ((strcmp(exName, "core_custom_logging") == 0) || 
+                if ((strcmp(exName, "core_custom_logging") == 0) ||
                     (strcmp(exName, "core_window_should_close") == 0) ||
                     (strcmp(exName, "core_custom_frame_control") == 0)) continue;
 
@@ -1506,7 +1512,7 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
                 // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
                 // STEP 5: Generate report with results
-                
+
                 // STEP 1: Load example and inject required code
                 //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
                 //      WARNING: If we make a copy and something fails, it could not be restored at the end
@@ -1517,7 +1523,7 @@ int main(int argc, char *argv[])
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
 
-#define BUILD_TESTING_WEB
+//#define BUILD_TESTING_WEB
 #if defined(BUILD_TESTING_WEB)
                 static const char *mainReplaceText =
                     "#include <stdio.h>\n"
@@ -1566,7 +1572,7 @@ int main(int argc, char *argv[])
                 // Build: raylib.com/examples/<category>/<category>_example_name.js
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
@@ -1616,12 +1622,17 @@ int main(int argc, char *argv[])
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #elif defined(PLATFORM_DRM)
+                LOG("INFO: [%s] Building example for PLATFORM_DRM (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DRM -B > %s/%s/logs/%s.build.log 2>&1",
                     exBasePath, exCategory, exName, exBasePath, exCategory, exName));
     #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
-                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-#endif
+                system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1",
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #endif
                 // Restore original source code before continue
                 FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
@@ -1630,7 +1641,12 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with required arguments
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
+
+    #if defined(_WIN32)
                 system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
+    #else
+                system(TextFormat("./%s --frames 2 > logs/%s.log", exName, exName));
+    #endif
 #endif
             }
         } break;
@@ -1667,7 +1683,7 @@ int main(int argc, char *argv[])
                 int exTestBuildLogLinesCount = 0;
                 char **exTestBuildLogLines = LoadTextLines(exTestBuildLog, &exTestBuildLogLinesCount);
 
-                for (int k = 0, index = 0; k < exTestBuildLogLinesCount; k++)
+                for (int k = 0; k < exTestBuildLogLinesCount; k++)
                 {
                     // Checking compilation warnings generated
                     if (TextFindIndex(exTestBuildLogLines[k], "warning:") >= 0) testing[i].buildwarns++;
@@ -1710,9 +1726,16 @@ int main(int argc, char *argv[])
                 // Load build log text lines
                 int exTestLogLinesCount = 0;
                 char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
-                for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
+                for (int k = 0; k < exTestLogLinesCount; k++)
                 {
-                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
+#if defined(BUILD_TESTING_WEB)
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore web-specific warning
+#endif
+#if defined(PLATFORM_DRM)
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: DISPLAY: No graphic") >= 0) continue; // Ignore specific warning
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GetCurrentMonitor()") >= 0) continue; // Ignore specific warning
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: SetWindowPosition()") >= 0) continue; // Ignore specific warning
+#endif
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
@@ -1755,7 +1778,7 @@ int main(int argc, char *argv[])
             |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
             | core_basic window                |    0    |    0    |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
             */
-            LOG("INFO: [examples_testing.md] Generating examples testing report...\n");
+            LOG("INFO: [examples_testing_os.md] Generating examples testing report...\n");
 
             char *report = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1);
 
@@ -1791,7 +1814,7 @@ int main(int argc, char *argv[])
                 if ((testing[i].buildwarns > 0) || (testing[i].warnings > 0) || (testing[i].status > 0))
                 {
                     repIndex += sprintf(report + repIndex, "| %-32s |    %i    |    %i    |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
-                        exBuildList[i], 
+                        exBuildList[i],
                         testing[i].buildwarns,
                         testing[i].warnings,
                         (testing[i].status & TESTING_FAIL_INIT)? "❌" : "✔",
@@ -1842,6 +1865,7 @@ int main(int argc, char *argv[])
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
             printf("    remove <example_name>         : Remove an existing example\n");
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
+            printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
             printf("    validate                      : Validate examples collection, generates report\n");
             printf("    update                        : Validate and update examples collection, generates report\n\n");
             printf("OPTIONS:\n\n");
@@ -2136,7 +2160,7 @@ static int UpdateRequiredFiles(void)
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
         "\nSome example missing? As always, contributions are welcome, feel free to send new examples!\n");
     mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-        "Here is an[examples template](examples_template.c) with instructions to start with!\n");
+        "Here is an [examples template](examples_template.c) with instructions to start with!\n");
 
     // Save updated file
     SaveFileText(TextFormat("%s/README.md", exBasePath), mdTextUpdated);
@@ -2598,29 +2622,29 @@ static int AddVSProjectToSolution(const char *slnFile, const char *projFile, con
 
     // Add project config lines
     offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t{%s}.Debug.DLL|ARM64.ActiveCfg = Debug.DLL|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.Build.0 = Debug.DLL|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.ActiveCfg = Debug|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.Build.0 = Debug|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.ActiveCfg = Debug|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.Build.0 = Debug|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.ActiveCfg = Debug|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.Build.0 = Debug|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.ActiveCfg = Release.DLL|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.Build.0 = Release.DLL|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.Build.0 = Release.DLL|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.ActiveCfg = Release|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.Build.0 = Release|ARM64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.ActiveCfg = Release|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.Build.0 = Release|x64\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.ActiveCfg = Release|Win32\n", uuid));
-	offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.Build.0 = Release|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|ARM64.Build.0 = Debug.DLL|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.ActiveCfg = Debug.DLL|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x64.Build.0 = Debug.DLL|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.ActiveCfg = Debug.DLL|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug.DLL|x86.Build.0 = Debug.DLL|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.ActiveCfg = Debug|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|ARM64.Build.0 = Debug|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.ActiveCfg = Debug|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x64.Build.0 = Debug|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.ActiveCfg = Debug|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Debug|x86.Build.0 = Debug|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.ActiveCfg = Release.DLL|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|ARM64.Build.0 = Release.DLL|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.ActiveCfg = Release.DLL|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x64.Build.0 = Release.DLL|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.ActiveCfg = Release.DLL|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release.DLL|x86.Build.0 = Release.DLL|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.ActiveCfg = Release|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|ARM64.Build.0 = Release|ARM64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.ActiveCfg = Release|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x64.Build.0 = Release|x64\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.ActiveCfg = Release|Win32\n", uuid));
+    offsetIndex += sprintf(slnTextUpdated + offsetIndex, TextFormat("\t\t{%s}.Release|x86.Build.0 = Release|Win32\n", uuid));
     // Write next section directly to avoid copy logic
     offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tEndGlobalSection\n");
     offsetIndex += sprintf(slnTextUpdated + offsetIndex, "\tGlobalSection(SolutionProperties) = preSolution\n");

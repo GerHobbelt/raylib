@@ -62,10 +62,15 @@ packages/
 emsdk
 
 # Ignore wasm data in examples/
+examples/**/*
+!examples/**/*.*
+!examples/**/*/
+examples/**/*.exe
 examples/**/*.wasm
 examples/**/*.data
 examples/**/*.js
 examples/**/*.html
+examples/**/logs/*
 
 # Ignore files build by xcode
 *.mode*v*

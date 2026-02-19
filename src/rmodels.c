@@ -3289,7 +3289,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
     for (int z = 0; z < cubicmap.height; ++z)
     {
-        for (int x = 0; x < cubicmap.width; ++x)
+        for (int x = 0; x < cubicmap.width; x++)
         {
             // Define the 8 vertex of the cube, we will combine them accordingly later...
             Vector3 v1 = { w*(x - 0.5f), h2, h*(z - 0.5f) };
@@ -3845,7 +3845,6 @@ void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float
 
 // Draw a model points
 // WARNING: OpenGL ES 2.0 does not support point mode drawing
-// TODO: gate these properly for non es 2.0 versions only
 void DrawModelPoints(Model model, Vector3 position, float scale, Color tint)
 {
     rlEnablePointMode();
@@ -5019,9 +5018,9 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
         animations[a].boneCount = iqmHeader->num_poses;
         animations[a].bones = (BoneInfo *)RL_MALLOC(iqmHeader->num_poses*sizeof(BoneInfo));
         animations[a].framePoses = (Transform **)RL_MALLOC(anim[a].num_frames*sizeof(Transform *));
-        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);   //  I don't like this 32 here
+        memcpy(animations[a].name, fileDataPtr + iqmHeader->ofs_text + anim[a].name, 32);
         TRACELOG(LOG_INFO, "IQM Anim %s", animations[a].name);
-        // animations[a].framerate = anim.framerate;     // TODO: Use animation framerate data?
+        //animations[a].framerate = anim.framerate; // TODO: Use animation framerate data?
 
         for (unsigned int j = 0; j < iqmHeader->num_poses; j++)
         {
@@ -5029,7 +5028,7 @@ static ModelAnimation *LoadModelAnimationsIQM(const char *fileName, int *animCou
             if (iqmHeader->num_joints > 0)
                 memcpy(animations[a].bones[j].name, fileDataPtr + iqmHeader->ofs_text + joints[j].name, BONE_NAME_LENGTH*sizeof(char));
             else
-                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // default bone name otherwise
+                strcpy(animations[a].bones[j].name, "ANIMJOINTNAME"); // Default bone name otherwise
             animations[a].bones[j].parent = poses[j].parent;
         }
 
@@ -5875,8 +5874,8 @@ static Model LoadGLTF(const char *fileName)
         //----------------------------------------------------------------------------------------------------
 
         // Load animation data
-        // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
-        // REF: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
+        // Ref: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skins
+        // Ref: https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#skinned-mesh-attributes
         //
         // LIMITATIONS:
         //  - Only supports 1 armature per file, and skips loading it if there are multiple armatures
