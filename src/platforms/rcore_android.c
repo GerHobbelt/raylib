@@ -27,7 +27,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -360,7 +360,7 @@ void RestoreWindow(void)
 void SetWindowState(unsigned int flags)
 {
     if (!CORE.Window.ready) TRACELOG(LOG_WARNING, "WINDOW: SetWindowState does nothing before window initialization, Use \"SetConfigFlags\" instead");
-    
+
     // State change: FLAG_WINDOW_ALWAYS_RUN
     if (FLAG_IS_SET(flags, FLAG_WINDOW_ALWAYS_RUN)) FLAG_SET(CORE.Window.flags, FLAG_WINDOW_ALWAYS_RUN);
 }
@@ -919,7 +919,27 @@ static int InitGraphicsDevice(void)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
-    platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    // NOTE: eglGetPlatformDisplay() is preferred over eglGetDisplay() legacy call
+    platform.device = EGL_NO_DISPLAY;
+#if defined(EGL_VERSION_1_5)
+    platform.device = eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+#else
+    // Check if extension is available for eglGetPlatformDisplayEXT()
+    // NOTE: Better compatibility with some drivers (e.g. Mali Midgard)
+    const char *eglClientExtensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+    if (eglClientExtensions != NULL)
+    {
+        if (strstr(eglClientExtensions, "EGL_EXT_platform_base") != NULL)
+        {
+            PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+            if (eglGetPlatformDisplayEXT != NULL) platform.device = eglGetPlatformDisplayEXT(EGL_PLATFORM_GBM_KHR, platform.gbmDevice, NULL);
+        }
+    }
+
+    // In case extension not found or display could not be retrieved, try useing legacy version
+    if (platform.device == EGL_NO_DISPLAY) platform.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
+
     if (platform.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -1336,30 +1356,17 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
     }
 
-    if ((flags == AMOTION_EVENT_ACTION_POINTER_UP) || (flags == AMOTION_EVENT_ACTION_UP) || (flags == AMOTION_EVENT_ACTION_HOVER_EXIT))
-    {
-        // One of the touchpoints is released, remove it from touch point arrays
-        if (flags == AMOTION_EVENT_ACTION_HOVER_EXIT)
-        {
-            // If the touchPoint is hover, remove it from hoverPoints
-            for (int i = 0; i < MAX_TOUCH_POINTS; i++)
-            {
-                if (touchRaw.hoverPoints[i] == touchRaw.pointId[pointerIndex])
-                {
-                    touchRaw.hoverPoints[i] = -1;
-                    break;
-                }
-            }
-        }
-        for (int i = pointerIndex; (i < touchRaw.pointCount - 1) && (i < MAX_TOUCH_POINTS - 1); i++)
-        {
-            touchRaw.pointId[i] = touchRaw.pointId[i+1];
-            touchRaw.position[i] = touchRaw.position[i+1];
-        }
-        touchRaw.pointCount--;
-    }
+#if defined(SUPPORT_GESTURES_SYSTEM)
+    GestureEvent gestureEvent = { 0 };
 
-    int pointCount = 0;
+    gestureEvent.pointCount = 0;
+
+    // Register touch actions
+    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
+    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
+
     for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
     {
         // If the touchPoint is hover, Ignore it
@@ -1375,34 +1382,61 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         if (hover) continue;
 
-        CORE.Input.Touch.pointId[pointCount] = touchRaw.pointId[i];
-        CORE.Input.Touch.position[pointCount] = touchRaw.position[i];
-        pointCount++;
-    }
-    CORE.Input.Touch.pointCount = pointCount;
-
-#if defined(SUPPORT_GESTURES_SYSTEM)
-    GestureEvent gestureEvent = { 0 };
-
-    gestureEvent.pointCount = CORE.Input.Touch.pointCount;
-
-    // Register touch actions
-    if (flags == AMOTION_EVENT_ACTION_DOWN) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
-    else if (flags == AMOTION_EVENT_ACTION_UP) gestureEvent.touchAction = TOUCH_ACTION_UP;
-    else if (flags == AMOTION_EVENT_ACTION_MOVE) gestureEvent.touchAction = TOUCH_ACTION_MOVE;
-    else if (flags == AMOTION_EVENT_ACTION_CANCEL) gestureEvent.touchAction = TOUCH_ACTION_CANCEL;
-
-    for (int i = 0; (i < gestureEvent.pointCount) && (i < MAX_TOUCH_POINTS); i++)
-    {
-        gestureEvent.pointId[i] = CORE.Input.Touch.pointId[i];
-        gestureEvent.position[i] = CORE.Input.Touch.position[i];
-        gestureEvent.position[i].x /= (float)GetScreenWidth();
-        gestureEvent.position[i].y /= (float)GetScreenHeight();
+        gestureEvent.pointId[gestureEvent.pointCount] = touchRaw.pointId[i];
+        gestureEvent.position[gestureEvent.pointCount] = touchRaw.position[i];
+        gestureEvent.position[gestureEvent.pointCount].x /= (float)GetScreenWidth();
+        gestureEvent.position[gestureEvent.pointCount].y /= (float)GetScreenHeight();
+        gestureEvent.pointCount++;
     }
 
     // Gesture data is sent to gestures system for processing
     ProcessGestureEvent(gestureEvent);
 #endif
+
+    if (flags == AMOTION_EVENT_ACTION_HOVER_EXIT)
+    {
+        // Hover exited. So, remove it from hoverPoints
+        for (int i = 0; i < MAX_TOUCH_POINTS; i++)
+        {
+            if (touchRaw.hoverPoints[i] == touchRaw.pointId[pointerIndex])
+            {
+                touchRaw.hoverPoints[i] = -1;
+                break;
+            }
+        }
+    }
+
+    if ((flags == AMOTION_EVENT_ACTION_POINTER_UP) || (flags == AMOTION_EVENT_ACTION_UP))
+    {
+        // One of the touchpoints is released, remove it from touch point arrays
+        for (int i = pointerIndex; (i < touchRaw.pointCount - 1) && (i < MAX_TOUCH_POINTS - 1); i++)
+        {
+            touchRaw.pointId[i] = touchRaw.pointId[i+1];
+            touchRaw.position[i] = touchRaw.position[i+1];
+        }
+        touchRaw.pointCount--;
+    }
+
+    CORE.Input.Touch.pointCount = 0;
+    for (int i = 0; (i < touchRaw.pointCount) && (i < MAX_TOUCH_POINTS); i++)
+    {
+        // If the touchPoint is hover, Ignore it
+        bool hover = false;
+        for (int j = 0; j < MAX_TOUCH_POINTS; j++)
+        {
+            // Check if the touchPoint is in hoverPointers
+            if (touchRaw.hoverPoints[j] == touchRaw.pointId[i])
+            {
+                hover = true;
+                break;
+            }
+        }
+        if (hover) continue;
+
+        CORE.Input.Touch.pointId[CORE.Input.Touch.pointCount] = touchRaw.pointId[i];
+        CORE.Input.Touch.position[CORE.Input.Touch.pointCount] = touchRaw.position[i];
+        CORE.Input.Touch.pointCount++;
+    }
 
     // When all touchpoints are tapped and released really quickly, this event is generated
     if (flags == AMOTION_EVENT_ACTION_CANCEL) CORE.Input.Touch.pointCount = 0;

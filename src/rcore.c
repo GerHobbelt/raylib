@@ -70,7 +70,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2025 Ramon Santamaria (@raysan5) and contributors
+*   Copyright (c) 2013-2026 Ramon Santamaria (@raysan5) and contributors
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -205,11 +205,13 @@
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
     #define MKDIR(dir) _mkdir(dir)
+    #define ACCESS(fn) _access(fn, 0)
 #else
     #include <unistd.h>             // Required for: getch(), chdir(), mkdir(), access()
     #define GETCWD getcwd
     #define CHDIR chdir
     #define MKDIR(dir) mkdir(dir, 0777)
+    #define ACCESS(fn) access(fn, F_OK)
 #endif
 
 //----------------------------------------------------------------------------------
@@ -318,7 +320,7 @@ typedef struct CoreData {
             char currentKeyState[MAX_KEYBOARD_KEYS]; // Registers current frame key state
             char previousKeyState[MAX_KEYBOARD_KEYS]; // Registers previous frame key state
 
-            // NOTE: Since key press logic involves comparing previous vs currrent key state, 
+            // NOTE: Since key press logic involves comparing previous vs currrent key state,
             // key repeats needs to be handled specially
             char keyRepeatInFrame[MAX_KEYBOARD_KEYS]; // Registers key repeats for current frame
 
@@ -815,7 +817,7 @@ int GetScreenHeight(void)
 int GetRenderWidth(void)
 {
     int width = 0;
-    
+
     if (CORE.Window.usingFbo) return CORE.Window.currentFbo.width;
     else width = CORE.Window.render.width;
 
@@ -1733,7 +1735,7 @@ int GetRandomValue(int min, int max)
     {
         TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
     }
-    
+
     // NOTE: This one-line approach produces a non-uniform distribution,
     // as stated by Donald Knuth in the book The Art of Programming, so
     // using below approach for more uniform results
@@ -1972,11 +1974,7 @@ bool FileExists(const char *fileName)
 {
     bool result = false;
 
-#if defined(_WIN32)
-    if (_access(fileName, 0) != -1) result = true;
-#else
-    if (access(fileName, F_OK) != -1) result = true;
-#endif
+    if (ACCESS(fileName) != -1) result = true;
 
     // NOTE: Alternatively, stat() can be used instead of access()
     //#include <sys/stat.h>
@@ -2259,7 +2257,7 @@ const char *GetApplicationDirectory(void)
 
 #if defined(_WIN32)
     int len = 0;
-    
+
     #if defined(UNICODE)
     unsigned short widePath[MAX_PATH];
     len = GetModuleFileNameW(NULL, (wchar_t *)widePath, MAX_PATH);
@@ -2267,7 +2265,7 @@ const char *GetApplicationDirectory(void)
     #else
     len = GetModuleFileNameA(NULL, appDir, MAX_PATH);
     #endif
-    
+
     if (len > 0)
     {
         for (int i = len; i >= 0; --i)
@@ -2284,7 +2282,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '\\';
     }
-    
+
 #elif defined(__linux__)
 
     unsigned int size = sizeof(appDir);
@@ -2306,7 +2304,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__APPLE__)
 
     uint32_t size = sizeof(appDir);
@@ -2328,7 +2326,7 @@ const char *GetApplicationDirectory(void)
         appDir[0] = '.';
         appDir[1] = '/';
     }
-    
+
 #elif defined(__FreeBSD__)
 
     size_t size = sizeof(appDir);
@@ -2699,7 +2697,7 @@ unsigned char *DecodeDataBase64(const char *text, int *outputSize)
         ['0'] = 52, ['1'] = 53, ['2'] = 54, ['3'] = 55, ['4'] = 56, ['5'] = 57, ['6'] = 58, ['7'] = 59,
         ['8'] = 60, ['9'] = 61, ['+'] = 62, ['/'] = 63
     };
- 
+
     *outputSize = 0;
     if (text == NULL) return NULL;
 
@@ -3255,7 +3253,7 @@ bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
     byteCount += sprintf(txtData + byteCount, "# more info and bugs-report:  github.com/raysan5/raylib\n");
     byteCount += sprintf(txtData + byteCount, "# feedback and support:       ray[at]raylib.com\n");
     byteCount += sprintf(txtData + byteCount, "#\n");
-    byteCount += sprintf(txtData + byteCount, "# Copyright (c) 2023-2025 Ramon Santamaria (@raysan5)\n");
+    byteCount += sprintf(txtData + byteCount, "# Copyright (c) 2023-2026 Ramon Santamaria (@raysan5)\n");
     byteCount += sprintf(txtData + byteCount, "#\n\n");
 
     // Add events data
@@ -4243,7 +4241,7 @@ const char *TextFormat(const char *text, ...)
 
     char *currentBuffer = buffers[index];
     memset(currentBuffer, 0, MAX_TEXT_BUFFER_LENGTH);   // Clear buffer before using
-    
+
     if (text != NULL)
     {
         va_list args;
