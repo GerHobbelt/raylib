@@ -49,8 +49,6 @@
 #define CloseWindow CloseWindowWin32
 #define Rectangle RectangleWin32
 #define ShowCursor ShowCursorWin32
-#define LoadImageA LoadImageAWin32
-#define LoadImageW LoadImageWin32
 #define DrawTextA DrawTextAWin32
 #define DrawTextW DrawTextWin32
 #define DrawTextExA DrawTextExAWin32
@@ -63,8 +61,6 @@
 #undef Rectangle        // raylib symbol collision
 #undef ShowCursor       // raylib symbol collision
 #undef LoadImage        // raylib symbol collision
-#undef LoadImageA
-#undef LoadImageW
 #undef DrawText         // raylib symbol collision
 #undef DrawTextA
 #undef DrawTextW
@@ -275,7 +271,7 @@ static DWORD MakeWindowStyle(unsigned flags)
 
     // Minimized takes precedence over maximized
     int mized = MIZED_NONE;
-    if (FLAG_CHECK(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
+    if (FLAG_IS_SET(flags, FLAG_WINDOW_MINIMIZED)) mized = MIZED_MIN;
     if (flags & FLAG_WINDOW_MAXIMIZED) mized = MIZED_MAX;
 
     switch (mized)
@@ -1143,7 +1139,7 @@ void ShowCursor(void)
 // Hides mouse cursor
 void HideCursor(void)
 {
-    // NOTE: We use SetCursor() instead of ShowCursor() because 
+    // NOTE: We use SetCursor() instead of ShowCursor() because
     // it makes it easy to only hide the cursor while it's inside the client area
     SetCursor(NULL);
     CORE.Input.Mouse.cursorHidden = true;
@@ -1529,7 +1525,7 @@ int InitPlatform(void)
     // Load user-provided icon if available
     // NOTE: raylib resource file defaults to GLFW_ICON id, so looking for same identifier
     windowClass.hIcon = LoadImageW(hInstance, L"GLFW_ICON", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    if (!windowClass.hIcon) windowClass.hIcon = LoadImageW(NULL, (LPCWSTR)IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 
     // Register window class
     result = (int)RegisterClassExW(&windowClass);
