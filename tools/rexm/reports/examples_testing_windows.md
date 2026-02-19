@@ -4,7 +4,8 @@
 
 ```
 Example automated testing elements validated:
- - [WARN]   : WARNING messages count
+ - [CWARN]  : Compilation WARNING messages
+ - [LWARN]  : Log WARNING messages count
  - [INIT]   : Initialization
  - [CLOSE]  : Closing
  - [ASSETS] : Assets loading
@@ -13,8 +14,9 @@ Example automated testing elements validated:
  - [FONT]   : Font default initialization
  - [TIMER]  : Timer initialization
 ```
-| **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
-|:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
-| core_custom_logging              |   0   |   ✔   |    ✔    |   ❌    |   ✔   |   ✔   |   ✔   |   ✔   |
-| core_custom_frame_control        |   0   |   ❌   |    ❌    |   ❌    |   ❌   |   ❌   |   ❌   |   ✔   |
+| **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
+|:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
+| text_font_loading                |    0    |    10    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| text_codepoints_loading          |    0    |    1    |   ✔   |    ✔    |   ✔    |   ✔   |   ✔   |   ✔   |   ✔   |
+| models_animation_playing         |    0    |    1    |   ✔   |    ✔    |   ❌    |   ✔   |   ✔   |   ✔   |   ✔   |
 

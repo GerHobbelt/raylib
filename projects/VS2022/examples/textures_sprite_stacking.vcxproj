@@ -51,11 +51,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4E9D2828-EE83-40C8-97E0-137EEDFBAAAD}</ProjectGuid>
+    <ProjectGuid>{FC4DEBD2-4B17-4534-8EEA-BB24A2DBEB5F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>textures_screen_buffer</RootNamespace>
+    <RootNamespace>textures_sprite_stacking</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>textures_screen_buffer</ProjectName>
+    <ProjectName>textures_sprite_stacking</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -553,7 +553,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\examples\textures\textures_screen_buffer.c" />
+    <ClCompile Include="..\..\..\examples\textures\textures_sprite_stacking.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\examples\examples.rc" />

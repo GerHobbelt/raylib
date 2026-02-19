@@ -94,8 +94,9 @@ typedef struct {
 
 // Automated testing data
 typedef struct {
-    int warnings;           // Warnings counter           
-    int status;             // Testing status result flags
+    int buildwarns;         // Example building warnings count (by GCC compiler)
+    int warnings;           // Example run output log warnings count
+    int status;             // Example run testing status flags (>0 = FAILS)
 } rlExampleTesting;
 
 // Validation status for a single example
@@ -140,7 +141,8 @@ typedef enum {
     OP_VALIDATE = 5,        // Validate examples, using [examples_list.txt] as main source by default
     OP_UPDATE   = 6,        // Validate and update required examples (as far as possible): ALL
     OP_BUILD    = 7,        // Build example(s) for desktop and web, copy web output - Multiple examples supported
-    OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiplee examples supported
+    OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiple examples supported
+    OP_TESTLOG  = 9,        // Process available examples logs to generate report
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio", "others" };
@@ -402,7 +404,7 @@ int main(int argc, char *argv[])
 
             opCode = OP_UPDATE;
         }
-        else if ((strcmp(argv[1], "build") == 0) || (strcmp(argv[1], "test") == 0))
+        else if ((strcmp(argv[1], "build") == 0) || (strcmp(argv[1], "test") == 0) || (strcmp(argv[1], "testlog") == 0))
         {
             // Build/Test example(s) for PLATFORM_DESKTOP and PLATFORM_WEB
             // NOTE: Build outputs to default directory, usually where the .c file is located,
@@ -414,18 +416,28 @@ int main(int argc, char *argv[])
             else
             {
                 // Support building/testing not only individual examples but multiple: ALL/<category>
-                rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListCount);
+                int exBuildListInfoCount = 0;
+                rlExampleInfo *exBuildListInfo = LoadExampleData(argv[2], false, &exBuildListInfoCount);
                     
-                for (int i = 0; i < exBuildListCount; i++)
+                for (int i = 0; i < exBuildListInfoCount; i++)
                 {
-                    exBuildList[i] = (char *)RL_CALLOC(256, sizeof(char));
-                    strcpy(exBuildList[i], exBuildListInfo[i].name);
+                    if (!TextIsEqual(exBuildListInfo[i].category, "others"))
+                    {
+                        exBuildList[exBuildListCount] = (char *)RL_CALLOC(256, sizeof(char));
+                        strcpy(exBuildList[exBuildListCount], exBuildListInfo[i].name);
+                        exBuildListCount++;
+                    }
                 }
                     
                 UnloadExampleData(exBuildListInfo);
                 
                 if (exBuildListCount == 0) LOG("WARNING: BUILD: Example requested not available in the collection\n");
-                else opCode = OP_TEST;
+                else
+                {
+                    if (strcmp(argv[1], "build") == 0) opCode = OP_BUILD;
+                    else if (strcmp(argv[1], "test") == 0) opCode = OP_TEST;
+                    else if (strcmp(argv[1], "testlog") == 0) opCode = OP_TESTLOG;
+                }
             }
         }
 
@@ -1265,8 +1277,8 @@ int main(int argc, char *argv[])
                             _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                             system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #else
-                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->filter);
-                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->filter));
+                            LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
+                            system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exInfo->category, exInfo->name));
                         #endif
 
                             // Update generated .html metadata
@@ -1453,7 +1465,20 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: TEST\n");
             LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-            rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
+#if defined(_WIN32)
+            // Set required environment variables
+            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
+            //_putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
+            //putenv("MAKE=mingw32-make");
+            //ChangeDirectory(exBasePath);
+            //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
+            //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
+            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.9.2-nuget_64bit");
+            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\20.18.0_64bit\\bin");
+            //_putenv("PATH=%PATH%;$(MAKE_PATH);$(EMSDK_PATH);$(NODE_PATH);$(PYTHON_PATH)");
+
+            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.9.2-nuget_64bit;C:\\raylib\\emsdk\\node\\20.18.0_64bit\\bin");
+#endif
 
             for (int i = 0; i < exBuildListCount; i++)
             {
@@ -1463,7 +1488,15 @@ int main(int argc, char *argv[])
                 memset(exCategory, 0, 32);
                 strncpy(exCategory, exName, TextFindIndex(exName, "_"));
 
+                // Skip some examples from building
+                if ((strcmp(exName, "core_custom_logging") == 0) || 
+                    (strcmp(exName, "core_window_should_close") == 0) ||
+                    (strcmp(exName, "core_custom_frame_control") == 0)) continue;
+
                 LOG("INFO: [%i/%i] Testing example: [%s]\n", i + 1, exBuildListCount, exName);
+
+                // Create directory for logs (build and run logs)
+                MakeDirectory(TextFormat("%s/%s/logs", exBasePath, exCategory));
 
                 // Steps to follow
                 // STEP 1: Load example.c and replace required code to inject basic testing code: frames to run
@@ -1473,7 +1506,7 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with arguments: --frames 2 > <example>.out.log
                 // STEP 4: Load <example>.out.log and check "WARNING:" messages -> Some could maybe be ignored
                 // STEP 5: Generate report with results
-
+                
                 // STEP 1: Load example and inject required code
                 //    PROBLEM: As we need to modify the example source code for building, we need to keep a copy or something
                 //      WARNING: If we make a copy and something fails, it could not be restored at the end
@@ -1483,6 +1516,77 @@ int main(int argc, char *argv[])
                 FileCopy(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
                     TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
                 char *srcText = LoadFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+
+#define BUILD_TESTING_WEB
+#if defined(BUILD_TESTING_WEB)
+                static const char *mainReplaceText =
+                    "#include <stdio.h>\n"
+                    "#include <string.h>\n"
+                    "#include <stdlib.h>\n"
+                    "#include <emscripten/emscripten.h>\n\n"
+                    "static char logText[4096] = {0};\n"
+                    "static int logTextOffset = 0;\n\n"
+                    "void CustomTraceLog(int msgType, const char *text, va_list args)\n{\n"
+                    "    if (logTextOffset < 3800)\n    {\n"
+                    "    switch (msgType)\n    {\n"
+                    "        case LOG_INFO: logTextOffset += sprintf(logText + logTextOffset, \"INFO: \"); break;\n"
+                    "        case LOG_ERROR: logTextOffset += sprintf(logText + logTextOffset, \"ERROR: \"); break;\n"
+                    "        case LOG_WARNING: logTextOffset += sprintf(logText + logTextOffset, \"WARNING: \"); break;\n"
+                    "        case LOG_DEBUG: logTextOffset += sprintf(logText + logTextOffset, \"DEBUG: \"); break;\n"
+                    "        default: break;\n    }\n"
+                    "    logTextOffset += vsprintf(logText + logTextOffset, text, args);\n"
+                    "    logTextOffset += sprintf(logText + logTextOffset, \"\\n\");\n}\n}\n\n"
+                    "int main(int argc, char *argv[])\n{\n"
+                    "    SetTraceLogCallback(CustomTraceLog);\n"
+                    "    int requestedTestFrames = 0;\n"
+                    "    int testFramesCount = 0;\n"
+                    "    if ((argc > 1) && (argc == 3) && (strcmp(argv[1], \"--frames\") != 0)) requestedTestFrames = atoi(argv[2]);\n";
+
+                static const char *returnReplaceText =
+                    "    SaveFileText(\"outputLogFileName\", logText);\n"
+                    "    emscripten_run_script(\"saveFileFromMEMFSToDisk('outputLogFileName','outputLogFileName')\");\n\n"
+                    "    return 0";
+                char *returnReplaceTextUpdated = TextReplace(returnReplaceText, "outputLogFileName", TextFormat("%s.log", exName));
+
+                char *srcTextUpdated[4] = { 0 };
+                srcTextUpdated[0] = TextReplace(srcText, "int main(void)\n{", mainReplaceText);
+                srcTextUpdated[1] = TextReplace(srcTextUpdated[0], "WindowShouldClose()", "WindowShouldClose() && (testFramesCount < requestedTestFrames)");
+                srcTextUpdated[2] = TextReplace(srcTextUpdated[1], "EndDrawing();", "EndDrawing(); testFramesCount++;");
+                srcTextUpdated[3] = TextReplace(srcTextUpdated[2], "    return 0", returnReplaceTextUpdated);
+                MemFree(returnReplaceTextUpdated);
+                UnloadFileText(srcText);
+
+                SaveFileText(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName), srcTextUpdated[3]);
+                for (int i = 0; i < 4; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
+
+                // Build example for PLATFORM_WEB
+                // Build: raylib.com/examples/<category>/<category>_example_name.html
+                // Build: raylib.com/examples/<category>/<category>_example_name.data
+                // Build: raylib.com/examples/<category>/<category>_example_name.wasm
+                // Build: raylib.com/examples/<category>/<category>_example_name.js
+    #if defined(_WIN32)
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exName);
+                system(TextFormat("mingw32-make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #else
+                LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exName);
+                system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exCategory, exName));
+    #endif
+                // Restore original source code before continue
+                FileCopy(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName),
+                    TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName));
+                FileRemove(TextFormat("%s/%s/%s.original.c", exBasePath, exCategory, exName));
+
+                // STEP 3: Run example on browser
+                // WARNING: Example download is asynchronous so reading fails on next step
+                // when looking for a file that could not have been downloaded yet
+                ChangeDirectory(TextFormat("%s", exBasePath));
+                if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
+                system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
+
+                // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
+
+#else // BUILD_TESTING_DESKTOP
 
                 static const char *mainReplaceText =
                     "#include <string.h>\n"
@@ -1502,18 +1606,19 @@ int main(int argc, char *argv[])
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
                 // STEP 2: Build example for DESKTOP platform
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 // Set required environment variables
                 //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
                 _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                 //putenv("MAKE=mingw32-make");
                 //ChangeDirectory(exBasePath);
-#endif
+    #endif
                 // Build example for PLATFORM_DESKTOP
-#if defined(_WIN32)
+    #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
-                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
-#else
+                system(TextFormat("mingw32-make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B > %s/%s/logs/%s.build.log 2>&1", 
+                    exBasePath, exCategory, exName, exBasePath, exCategory, exName));
+    #else
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: POSIX)\n", exName);
                 system(TextFormat("make -C %s %s/%s PLATFORM=PLATFORM_DESKTOP -B", exBasePath, exCategory, exName));
 #endif
@@ -1525,13 +1630,65 @@ int main(int argc, char *argv[])
                 // STEP 3: Run example with required arguments
                 // NOTE: Not easy to retrieve process return value from system(), it's platform dependant
                 ChangeDirectory(TextFormat("%s/%s", exBasePath, exCategory));
-                system(TextFormat("%s --frames 2 > %s.log", exName, exName));
+                system(TextFormat("%s --frames 2 > logs/%s.log", exName, exName));
+#endif
+            }
+        } break;
+        case OP_TESTLOG:
+        {
+            // STEP 4: Load and validate available logs info
+            //---------------------------------------------------------------------------------------------
+            rlExampleTesting *testing = (rlExampleTesting *)RL_CALLOC(exBuildListCount, sizeof(rlExampleTesting));
 
-                // STEP 4: Load and validate log info
-                char *exTestLog = LoadFileText(TextFormat("%s/%s/%s.log", exBasePath, exCategory, exName));
-                int exTestLogLinesCount = 0;
-                char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
-                
+            for (int i = 0; i < exBuildListCount; i++)
+            {
+                // Get example name and category
+                memset(exName, 0, 64);
+                strcpy(exName, exBuildList[i]);
+                memset(exCategory, 0, 32);
+                strncpy(exCategory, exName, TextFindIndex(exName, "_"));
+
+                // Skip some examples from building
+                if ((strcmp(exName, "core_custom_logging") == 0) ||
+                    (strcmp(exName, "core_window_should_close") == 0) ||
+                    (strcmp(exName, "core_custom_frame_control") == 0)) continue;
+
+                LOG("INFO: [%i/%i] Checking example log: [%s]\n", i + 1, exBuildListCount, exName);
+
+                // Load <example_name>.build.log to check for compilation warnings
+                char *exTestBuildLog = LoadFileText(TextFormat("%s/%s/logs/%s.build.log", exBasePath, exCategory, exName));
+                if (exTestBuildLog == NULL)
+                {
+                    LOG("WARNING: [%s] Build log could not be loaded\n", exName);
+                    continue;
+                }
+
+                // Load build log text lines
+                int exTestBuildLogLinesCount = 0;
+                char **exTestBuildLogLines = LoadTextLines(exTestBuildLog, &exTestBuildLogLinesCount);
+
+                for (int k = 0, index = 0; k < exTestBuildLogLinesCount; k++)
+                {
+                    // Checking compilation warnings generated
+                    if (TextFindIndex(exTestBuildLogLines[k], "warning:") >= 0) testing[i].buildwarns++;
+                }
+
+                UnloadTextLines(exTestBuildLogLines, exTestBuildLogLinesCount);
+                UnloadFileText(exTestBuildLog);
+
+#if defined(BUILD_TESTING_WEB)
+                // TODO: REVIEW: Hardcoded path where web logs are copied after automatic download
+                char *exTestLog = LoadFileText(TextFormat("D:/testing_logs_web/%s.log", exName));
+#else
+                char *exTestLog = LoadFileText(TextFormat("%s/%s/logs/%s.log", exBasePath, exCategory, exName));
+#endif
+                if (exTestLog == NULL)
+                {
+                    LOG("WARNING: [%s] Execution log could not be loaded\n", exName);
+                    testing[i].status = 0b1111111;
+                    continue;
+                }
+
                 /*
                 TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
                 TESTING_FAIL_CLOSE     = 1 << 1,   // Closing (CloseWindow())          -> "INFO: Window closed successfully"
@@ -1550,20 +1707,42 @@ int main(int argc, char *argv[])
                 if (TextFindIndex(exTestLog, "INFO: FONT: Default font loaded successfully") == -1) testing[i].status |= TESTING_FAIL_FONT;
                 if (TextFindIndex(exTestLog, "INFO: TIMER: Target time per frame:") == -1) testing[i].status |= TESTING_FAIL_TIMER;
 
+                // Load build log text lines
+                int exTestLogLinesCount = 0;
+                char **exTestLogLines = LoadTextLines(exTestLog, &exTestLogLinesCount);
                 for (int k = 0, index = 0; k < exTestLogLinesCount; k++)
                 {
+                    if (TextFindIndex(exTestLogLines[k], "WARNING: GL: NPOT") >= 0) continue; // Ignore warning
                     if (TextFindIndex(exTestLogLines[k], "WARNING") >= 0) testing[i].warnings++;
                 }
-
                 UnloadTextLines(exTestLogLines, exTestLogLinesCount);
                 UnloadFileText(exTestLog);
             }
+            //---------------------------------------------------------------------------------------------
 
             // STEP 5: Generate testing report/table with results (.md)
             //-----------------------------------------------------------------------------------------------------
+#if defined(BUILD_TESTING_WEB)
+            const char *osName = "Web";
+#else
+    #if defined(PLATFORM_DRM)
+            const char *osName = "DRM";
+    #elif defined(PLATFORM_DESKTOP)
+        #if defined(_WIN32)
+            const char *osName = "Windows";
+        #elif defined(__linux__)
+            const char *osName = "Linux";
+        #elif defined(__FreeBSD__)
+            const char *osName = "FreeBSD";
+        #elif defined(__APPLE__)
+            const char *osName = "macOS";
+        #endif // Desktop OSs
+    #endif
+#endif
             /*
             Columns:
-             - [WARN]   : WARNING messages count
+             - [CWARN]  : Compilation WARNING messages
+             - [LWARN]  : Log WARNING messages count
              - [INIT]   : Initialization
              - [CLOSE]  : Closing
              - [ASSETS] : Assets loading
@@ -1572,9 +1751,9 @@ int main(int argc, char *argv[])
              - [FONT]   : Font default initialization
              - [TIMER]  : Timer initialization
 
-            | **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
-            |:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
-            | core_basic window                |    0   |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
+            | **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |
+            |:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|
+            | core_basic window                |    0    |    0    |   ✔   |    ✔    |    ✔    |   ✔   |    ✔   |   ✔   |    ✔   |
             */
             LOG("INFO: [examples_testing.md] Generating examples testing report...\n");
 
@@ -1582,10 +1761,11 @@ int main(int argc, char *argv[])
 
             int repIndex = 0;
             repIndex += sprintf(report + repIndex, "# EXAMPLES COLLECTION - TESTING REPORT\n\n");
-            repIndex += sprintf(report + repIndex, "## Tested Platform: Windows\n\n");
+            repIndex += sprintf(report + repIndex, TextFormat("## Tested Platform: %s\n\n", osName));
 
             repIndex += sprintf(report + repIndex, "```\nExample automated testing elements validated:\n");
-            repIndex += sprintf(report + repIndex, " - [WARN]   : WARNING messages count\n");
+            repIndex += sprintf(report + repIndex, " - [CWARN]  : Compilation WARNING messages\n");
+            repIndex += sprintf(report + repIndex, " - [LWARN]  : Log WARNING messages count\n");
             repIndex += sprintf(report + repIndex, " - [INIT]   : Initialization\n");
             repIndex += sprintf(report + repIndex, " - [CLOSE]  : Closing\n");
             repIndex += sprintf(report + repIndex, " - [ASSETS] : Assets loading\n");
@@ -1594,8 +1774,8 @@ int main(int argc, char *argv[])
             repIndex += sprintf(report + repIndex, " - [FONT]   : Font default initialization\n");
             repIndex += sprintf(report + repIndex, " - [TIMER]  : Timer initialization\n```\n");
 
-            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [WARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |\n");
-            repIndex += sprintf(report + repIndex, "|:---------------------------------|:------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|\n");
+            repIndex += sprintf(report + repIndex, "| **EXAMPLE NAME**                 | [CWARN] | [LWARN] | [INIT] | [CLOSE] | [ASSETS] | [RLGL] | [PLAT] | [FONT] | [TIMER] |\n");
+            repIndex += sprintf(report + repIndex, "|:---------------------------------|:-------:|:-------:|:------:|:-------:|:--------:|:------:|:------:|:------:|:-------:|\n");
 
             /*
             TESTING_FAIL_INIT      = 1 << 0,   // Initialization (InitWindow())    -> "INFO: DISPLAY: Device initialized successfully"
@@ -1608,23 +1788,26 @@ int main(int argc, char *argv[])
             */
             for (int i = 0; i < exBuildListCount; i++)
             {
-                if (testing[i].status > 0)
+                if ((testing[i].buildwarns > 0) || (testing[i].warnings > 0) || (testing[i].status > 0))
                 {
-                    repIndex += sprintf(report + repIndex, "| %-32s |   %i   |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
-                        exBuildList[i], testing[i].warnings,
-                        (testing[i].status & TESTING_FAIL_INIT)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_CLOSE)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_ASSETS)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_RLGL)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_PLATFORM)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_FONT)? "✔" : "❌",
-                        (testing[i].status & TESTING_FAIL_TIMER)? "✔" : "❌");
+                    repIndex += sprintf(report + repIndex, "| %-32s |    %i    |    %i    |   %s   |    %s    |   %s    |   %s   |   %s   |   %s   |   %s   |\n",
+                        exBuildList[i], 
+                        testing[i].buildwarns,
+                        testing[i].warnings,
+                        (testing[i].status & TESTING_FAIL_INIT)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_CLOSE)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_ASSETS)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_RLGL)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_PLATFORM)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_FONT)? "❌" : "✔",
+                        (testing[i].status & TESTING_FAIL_TIMER)? "❌" : "✔");
                 }
             }
 
             repIndex += sprintf(report + repIndex, "\n");
 
-            SaveFileText(TextFormat("%s/../tools/rexm/reports/%s", exBasePath, "examples_testing_windows.md"), report);
+            SaveFileText(TextFormat("%s/../tools/rexm/reports/examples_testing_%s.md", exBasePath, TextToLower(osName)), report);
+
             RL_FREE(report);
             //-----------------------------------------------------------------------------------------------------
 
@@ -1883,7 +2066,7 @@ static int UpdateRequiredFiles(void)
         {
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex, TextFormat("\n### category: core [%i]\n\n", exCollectionCount));
             mdIndex += sprintf(mdTextUpdated + mdListStartIndex + mdIndex,
-                "Examples using raylib[core](../src/rcore.c) platform functionality like window creation, inputs, drawing modes and system functionality.\n\n");
+                "Examples using raylib [core](../src/rcore.c) module platform functionality: window creation, inputs, drawing modes and system functionality.\n\n");
         }
         else if (i == 1)    // "shapes"
         {

@@ -724,7 +724,8 @@ GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSiz
                         stbtt_GetCodepointHMetrics(&fontInfo, cp, &glyphs[k].advanceX, NULL);
                         glyphs[k].advanceX = (int)((float)glyphs[k].advanceX*scaleFactor);
 
-                        if (cpHeight > fontSize) TRACELOG(LOG_WARNING, "FONT: [0x%04x] Glyph height is bigger than requested font size: %i > %i", cp, cpHeight, (int)fontSize);
+                        // WARNING: If requested SDF font, sdf-glyph height is definitely bigger than fontSize due to FONT_SDF_CHAR_PADDING
+                        if ((type != FONT_SDF) && (cpHeight > fontSize)) TRACELOG(LOG_WARNING, "FONT: [0x%04x] Glyph height is bigger than requested font size: %i > %i", cp, cpHeight, (int)fontSize);
 
                         // Load glyph image
                         glyphs[k].image.width = cpWidth;
@@ -1451,16 +1452,20 @@ Rectangle GetGlyphAtlasRec(Font font, int codepoint)
 // NOTE: Returned lines end with null terminator '\0'
 char **LoadTextLines(const char *text, int *count)
 {
+    char **lines = NULL;
+
+    if (text == NULL) { *count = 0; return lines; }
+
     int lineCount = 1;
     int textSize = (int)strlen(text);
 
-    // Text pass to get required line count
+    // First text scan pass to get required line count
     for (int i = 0; i < textSize; i++)
     {
         if (text[i] == '\n') lineCount++;
     }
 
-    char **lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
+    lines = (char **)RL_CALLOC(lineCount, sizeof(char *));
     for (int i = 0, l = 0, lineLen = 0; i <= textSize; i++)
     {
         if ((text[i] == '\n') || (text[i] == '\0'))
@@ -1886,6 +1891,7 @@ void TextAppend(char *text, const char *append, int *position)
 int TextFindIndex(const char *text, const char *search)
 {
     int position = -1;
+    if (text == NULL) return position;
 
     char *ptr = (char *)strstr(text, search);
 
