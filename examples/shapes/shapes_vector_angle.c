@@ -1,6 +1,6 @@
 /*******************************************************************************************
 *
-*   raylib [others] example - vector angle
+*   raylib [shapes] example - vector angle
 *
 *   Example complexity rating: [★★☆☆] 2/4
 *
@@ -15,7 +15,7 @@
 
 #include "raylib.h"
 
-#include "raymath.h"
+#include "raymath.h"        // Required for: Vector2LineAngle()
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -25,11 +25,12 @@ int main(void)
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
+    
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib [others] example - vector angle");
+    InitWindow(screenWidth, screenHeight, "raylib [shapes] example - vector angle");
 
-    Vector2 v0 = { screenWidth/2, screenHeight/2 };
+    Vector2 v0 = { screenWidth/2.0f, screenHeight/2.0f };
     Vector2 v1 = Vector2Add(v0, (Vector2){ 100.0f, 80.0f });
     Vector2 v2 = { 0 };             // Updated with mouse position
 
@@ -96,17 +97,17 @@ int main(void)
                 DrawCircleSector(v0, 40.0f, startangle, startangle - angle, 32, Fade(GREEN, 0.6f));
             }
 
-            DrawText("v0", v0.x, v0.y, 10, DARKGRAY);
+            DrawText("v0", (int)v0.x, (int)v0.y, 10, DARKGRAY);
 
             // If the line from v0 to v1 would overlap the text, move it's position up 10
-            if (angleMode == 0 && Vector2Subtract(v0, v1).y > 0.0f) DrawText("v1", v1.x, v1.y-10.0f, 10, DARKGRAY);
-            if (angleMode == 0 && Vector2Subtract(v0, v1).y < 0.0f) DrawText("v1", v1.x, v1.y, 10, DARKGRAY);
+            if (angleMode == 0 && Vector2Subtract(v0, v1).y > 0.0f) DrawText("v1", (int)v1.x, (int)v1.y-10, 10, DARKGRAY);
+            if (angleMode == 0 && Vector2Subtract(v0, v1).y < 0.0f) DrawText("v1", (int)v1.x, (int)v1.y, 10, DARKGRAY);
 
             // If angle mode 1, use v1 to emphasize the horizontal line
-            if (angleMode == 1) DrawText("v1", v0.x + 40.0f, v0.y, 10, DARKGRAY);
+            if (angleMode == 1) DrawText("v1", (int)v0.x + 40, (int)v0.y, 10, DARKGRAY);
 
             // position adjusted by -10 so it isn't hidden by cursor
-            DrawText("v2", v2.x-10.0f, v2.y-10.0f, 10, DARKGRAY);
+            DrawText("v2", (int)v2.x-10, (int)v2.y-10, 10, DARKGRAY);
 
             DrawText("Press SPACE to change MODE", 460, 10, 20, DARKGRAY);
             DrawText(TextFormat("ANGLE: %2.2f", angle), 10, 70, 20, LIME);
