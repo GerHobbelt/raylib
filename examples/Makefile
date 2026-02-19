@@ -77,7 +77,7 @@ RAYLIB_SRC_PATH       ?= ../src
 
 # Locations of raylib.h and libraylib.a/libraylib.so
 # NOTE: Those variables are only used for PLATFORM_OS: LINUX, BSD
-DESTDIR ?= /usr/local
+DESTDIR               ?= /usr/local
 RAYLIB_INCLUDE_PATH   ?= $(DESTDIR)/include
 RAYLIB_LIB_PATH       ?= $(DESTDIR)/lib
 
@@ -525,6 +525,7 @@ CORE = \
     core/core_basic_screen_manager \
     core/core_basic_window \
     core/core_clipboard_text \
+    core/core_compute_hash \
     core/core_custom_frame_control \
     core/core_custom_logging \
     core/core_delta_time \
@@ -618,6 +619,7 @@ TEXTURES = \
     textures/textures_sprite_button \
     textures/textures_sprite_explosion \
     textures/textures_srcrec_dstrec \
+    textures/textures_screen_buffer \
     textures/textures_textured_curve \
     textures/textures_tiled_drawing \
     textures/textures_to_image
@@ -702,6 +704,7 @@ SHADERS = \
     shaders/shaders_vertex_displacement
 
 AUDIO = \
+	audio/audio_fft_spectrum_visualizer \
     audio/audio_mixed_processor \
     audio/audio_module_playing \
     audio/audio_music_stream \
