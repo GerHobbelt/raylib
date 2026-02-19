@@ -316,15 +316,16 @@ void ToggleBorderlessWindowed(void)
         // 2. The style unset handles the possibility of a width="value%" like on the default shell.html file
         EM_ASM
         (
+            const canvasId = UTF8ToString($0);
             setTimeout(function()
             {
                 Module.requestFullscreen(false, true);
                 setTimeout(function()
                 {
-                    canvas.style.width="unset";
+                    document.querySelector(canvasId).style.width="unset";
                 }, 100);
             }, 100);
-        );
+        , platform.canvasId);
         FLAG_SET(CORE.Window.flags, FLAG_BORDERLESS_WINDOWED_MODE);
     }
 }
@@ -893,7 +894,8 @@ void SwapScreenBuffer(void)
         const canvas = Module.canvas;
         const ctx = canvas.getContext('2d');
 
-        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height)) {
+        if (!Module.__img || (Module.__img.width !== width) || (Module.__img.height !== height))
+        {
             Module.__img = ctx.createImageData(width, height);
         }
 
@@ -953,8 +955,8 @@ void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float d
         if (duration > MAX_GAMEPAD_VIBRATION_TIME) duration = MAX_GAMEPAD_VIBRATION_TIME;
         duration *= 1000.0f; // Convert duration to ms
 
-        // Note: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
-        //       and Firefox only supports the hapticActuators API
+        // NOTE: At the moment (2024.10.21) Chrome, Edge, Opera, Safari, Android Chrome, Android Webview only support the vibrationActuator API,
+        // and Firefox only supports the hapticActuators API
         EM_ASM({
             try
             {
@@ -1238,9 +1240,9 @@ int InitPlatform(void)
     // Avoid creating a WebGL canvas, avoid calling glfwCreateWindow()
     emscripten_set_canvas_element_size(platform.canvasId, CORE.Window.screen.width, CORE.Window.screen.height);
     EM_ASM({
-        const canvas = document.getElementById("canvas");
+        const canvas = document.querySelector(UTF8ToString($0));
         Module.canvas = canvas;
-    });
+    }, platform.canvasId);
 
     // Load memory framebuffer with desired screen size
     // NOTE: Despite using a software framebuffer for blitting, GLFW still creates a WebGL canvas,
@@ -1798,8 +1800,8 @@ static EM_BOOL EmscriptenTouchCallback(int eventType, const EmscriptenTouchEvent
 // Emscripten: Called on fullscreen change events
 static EM_BOOL EmscriptenFullscreenChangeCallback(int eventType, const EmscriptenFullscreenChangeEvent *event, void *userData)
 {
-    // NOTE: 1. Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
-    //       2. Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
+    // NOTE 1: Reset the fullscreen flags if the user left fullscreen manually by pressing the Escape key
+    // NOTE 2: Which is a necessary safeguard because that case will bypass the toggles CORE.Window.flags resets
     if (platform.ourFullscreen) platform.ourFullscreen = false;
     else
     {

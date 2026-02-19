@@ -915,7 +915,7 @@ void SwapScreenBuffer(void)
         {
             TRACELOG(LOG_ERROR, "DISPLAY: Failed to get DRM resources");
             drmModeRmFB(platform.fd, fb);
-            struct drm_mode_destroy_dumb dreq = {0};
+            struct drm_mode_destroy_dumb dreq = { 0 };
             dreq.handle = creq.handle;
             drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
             return;
@@ -955,7 +955,7 @@ void SwapScreenBuffer(void)
         {
             TRACELOG(LOG_ERROR, "DISPLAY: No compatible CRTC found");
             drmModeRmFB(platform.fd, fb);
-            struct drm_mode_destroy_dumb dreq = {0};
+            struct drm_mode_destroy_dumb dreq = { 0 };
             dreq.handle = creq.handle;
             drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
             return;
@@ -971,7 +971,7 @@ void SwapScreenBuffer(void)
         TRACELOG(LOG_ERROR, "DISPLAY: Mode: %dx%d@%d", mode->hdisplay, mode->vdisplay, mode->vrefresh);
 
         drmModeRmFB(platform.fd, fb);
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = creq.handle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
         return;
@@ -989,7 +989,7 @@ void SwapScreenBuffer(void)
     // Clean up previous dumb buffer
     if (platform.prevDumbHandle)
     {
-        struct drm_mode_destroy_dumb dreq = {0};
+        struct drm_mode_destroy_dumb dreq = { 0 };
         dreq.handle = platform.prevDumbHandle;
         drmIoctl(platform.fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
     }
@@ -1469,7 +1469,7 @@ int InitPlatform(void)
     if (!eglChooseConfig(platform.device, framebufferAttribs, configs, numConfigs, &matchingNumConfigs))
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to choose EGL config: 0x%x", eglGetError());
-        free(configs);
+        RL_FREE(configs);
         return -1;
     }
 
