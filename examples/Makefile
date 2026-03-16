@@ -90,6 +90,11 @@ BUILD_MODE            ?= RELEASE
 # Use external GLFW library instead of rglfw module
 USE_EXTERNAL_GLFW     ?= FALSE
 
+# Enable support for X11 by default on Linux when using GLFW
+# NOTE: Wayland is disabled by default, only enable if you are sure
+GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
+GLFW_LINUX_ENABLE_X11      ?= TRUE
+
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
 SDL_INCLUDE_PATH      ?= $(RAYLIB_SRC_PATH)/external/SDL2/include
@@ -394,9 +399,11 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_GLFW)
         LDLIBS = -lraylib -lGL -lm -lpthread -ldl -lrt
 
         # On Wayland, additional libraries requires
-        ifeq ($(USE_WAYLAND_DISPLAY),TRUE)
+        ifeq ($(GLFW_LINUX_ENABLE_WAYLAND),TRUE)
             LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
-        else
+        endif
+
+        ifeq ($(GLFW_LINUX_ENABLE_X11),TRUE)
             # On X11, additional libraries required
             LDLIBS += -lX11
             # NOTE: It seems additional libraries are not required any more, latest GLFW just dlopen them
@@ -561,6 +568,7 @@ CORE = \
     core/core_window_flags \
     core/core_window_letterbox \
     core/core_window_should_close \
+    core/core_window_web \
     core/core_world_screen
 
 SHAPES = \
@@ -578,6 +586,7 @@ SHAPES = \
     shapes/shapes_easings_ball \
     shapes/shapes_easings_box \
     shapes/shapes_easings_rectangles \
+    shapes/shapes_easings_testbed \
     shapes/shapes_following_eyes \
     shapes/shapes_hilbert_curve \
     shapes/shapes_kaleidoscope \
@@ -655,8 +664,10 @@ TEXT = \
     text/text_writing_anim
 
 MODELS = \
+    models/models_animation_blend_custom \
+    models/models_animation_blending \
     models/models_animation_gpu_skinning \
-    models/models_animation_playing \
+    models/models_animation_timing \
     models/models_basic_voxel \
     models/models_billboard_rendering \
     models/models_bone_socket \
@@ -669,6 +680,7 @@ MODELS = \
     models/models_heightmap_rendering \
     models/models_loading \
     models/models_loading_gltf \
+    models/models_loading_iqm \
     models/models_loading_m3d \
     models/models_loading_vox \
     models/models_mesh_generation \
@@ -707,6 +719,7 @@ SHADERS = \
     shaders/shaders_palette_switch \
     shaders/shaders_postprocessing \
     shaders/shaders_raymarching_rendering \
+    shaders/shaders_rlgl_compute \
     shaders/shaders_rounded_rectangle \
     shaders/shaders_shadowmap_rendering \
     shaders/shaders_shapes_textures \
@@ -728,14 +741,6 @@ AUDIO = \
     audio/audio_sound_positioning \
     audio/audio_spectrum_visualizer \
     audio/audio_stream_effects
-
-OTHERS = \
-    others/easings_testbed \
-    others/embedded_files_loading \
-    others/raylib_opengl_interop \
-    others/rlgl_compute_shader \
-    others/rlgl_standalone \
-    others/web_basic_window
 #EXAMPLES_LIST_END
 
 # Define processes to execute
