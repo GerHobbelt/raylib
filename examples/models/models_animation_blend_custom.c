@@ -6,15 +6,16 @@
 *
 *   Example originally created with raylib 5.5, last time updated with raylib 5.5
 *
+*   Example contributed by dmitrii-brand (@dmitrii-brand) and reviewed by Ramon Santamaria (@raysan5)
+*
 *   DETAILS: Example demonstrates per-bone animation blending, allowing smooth transitions
 *   between two animations by interpolating bone transforms. This is useful for:
 *    - Blending movement animations (walk/run) with action animations (jump/attack)
 *    - Creating smooth animation transitions
 *    - Layering animations (e.g., upper body attack while lower body walks)
 *
-*   Example contributed by dmitrii-brand (@dmitrii-brand) and reviewed by Ramon Santamaria (@raysan5)
-*
-*   NOTE: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
+*   WARNING: GPU skinning must be enabled in raylib with a compilation flag,
+*   if not enabled, CPU skinning will be used instead
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
@@ -81,10 +82,10 @@ int main(void)
     ModelAnimation *anims = LoadModelAnimations("resources/models/gltf/greenman.glb", &animCount);
 
     // Use specific animation indices: 2-walk/move, 3-attack
-    unsigned int animIndex0 = 2; // Walk/Move animation (index 2)
-    unsigned int animIndex1 = 3; // Attack animation (index 3)
-    unsigned int animCurrentFrame0 = 0;
-    unsigned int animCurrentFrame1 = 0;
+    int animIndex0 = 2; // Walk/Move animation (index 2)
+    int animIndex1 = 3; // Attack animation (index 3)
+    int animCurrentFrame0 = 0;
+    int animCurrentFrame1 = 0;
     
     // Validate indices
     if (animIndex0 >= animCount) animIndex0 = 0;

@@ -69,7 +69,7 @@ endif
 
 # Define required raylib variables
 PROJECT_NAME          ?= raylib_examples
-RAYLIB_VERSION        ?= 5.5.0
+RAYLIB_VERSION        ?= 6.0.0
 RAYLIB_PATH           ?= ..
 
 # Define raylib source code path
@@ -94,6 +94,11 @@ USE_EXTERNAL_GLFW     ?= FALSE
 # NOTE: Wayland is disabled by default, only enable if you are sure
 GLFW_LINUX_ENABLE_WAYLAND  ?= FALSE
 GLFW_LINUX_ENABLE_X11      ?= TRUE
+
+# Enable support for X11 by default on Linux when using GLFW
+# NOTE: Wayland is disabled by default, only enable if you are sure
+RGFW_LINUX_ENABLE_WAYLAND  ?= FALSE
+RGFW_LINUX_ENABLE_X11      ?= TRUE
 
 # PLATFORM_DESKTOP_SDL: It requires SDL library to be provided externally
 # WARNING: Library is not included in raylib, it MUST be configured by users
@@ -475,7 +480,15 @@ ifeq ($(TARGET_PLATFORM),PLATFORM_DESKTOP_RGFW)
         # Libraries for Debian GNU/Linux desktop compipling
         # NOTE: Required packages: libegl1-mesa-dev
         LDFLAGS += -L../src
-        LDLIBS = -lraylib -lGL -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lm -lpthread -ldl -lrt
+        LDLIBS = -lraylib -lm
+
+        ifeq ($(RGFW_LINUX_ENABLE_X11),TRUE)
+            LDLIBS += -lGL -lX11 -lXrandr -lXinerama -lXi -lXxf86vm -lXcursor -lpthread -ldl -lrt
+        endif
+
+        ifeq ($(RGFW_LINUX_ENABLE_WAYLAND),TRUE)
+            LDLIBS += -lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon
+        endif
 
         # Explicit link to libc
         ifeq ($(RAYLIB_LIBTYPE),SHARED)

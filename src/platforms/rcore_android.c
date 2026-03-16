@@ -275,11 +275,11 @@ static int android_write(void *cookie, const char *buf, int size);
 static fpos_t android_seek(void *cookie, fpos_t offset, int whence);
 static int android_close(void *cookie);
 
-FILE *android_fopen(const char *fileName, const char *mode); // Replacement for fopen() -> Read-only!
+FILE *__real_fopen(const char *fileName, const char *mode); // Real fopen, provided by the linker (--wrap=fopen)
+FILE *__wrap_fopen(const char *fileName, const char *mode); // Replacement for fopen()
+
 FILE *funopen(const void *cookie, int (*readfn)(void *, char *, int), int (*writefn)(void *, const char *, int),
               fpos_t (*seekfn)(void *, fpos_t, int), int (*closefn)(void *));
-
-#define fopen(name, mode) android_fopen(name, mode)
 
 //----------------------------------------------------------------------------------
 // Module Functions Declaration
@@ -713,9 +713,9 @@ const char *GetKeyName(int key)
 // Register all input events
 void PollInputEvents(void)
 {
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     // NOTE: Gestures update must be called every frame to reset gestures correctly
-    // because ProcessGestureEvent() is just called on an event, not every frame
+    // because ProcessGestureEvent() is called on an event, not every frame
     UpdateGestures();
 #endif
 
@@ -1055,7 +1055,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     InitGraphicsDevice();
 
                     // Initialize OpenGL context (states and resources)
-                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
+                    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, stored as globals in rlgl
                     rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
 
                     // Setup default viewport
@@ -1065,11 +1065,11 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     // Initialize hi-res timer
                     InitTimer();
 
-                #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
+                #if SUPPORT_MODULE_RTEXT
                     // Load default font
                     // WARNING: External function: Module required: rtext
                     LoadFontDefault();
-                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    #if SUPPORT_MODULE_RSHAPES
                     // Set font white rectangle for shapes drawing, so shapes and text can be batched together
                     // WARNING: rshapes module is required, if not available, default internal white rectangle is used
                     Rectangle rec = GetFontDefault().recs[95];
@@ -1085,7 +1085,7 @@ static void AndroidCommandCallback(struct android_app *app, int32_t cmd)
                     }
                     #endif
                 #else
-                    #if defined(SUPPORT_MODULE_RSHAPES)
+                    #if SUPPORT_MODULE_RSHAPES
                     // Set default texture and rectangle to be used for shapes drawing
                     // NOTE: rlgl default texture is a 1x1 pixel UNCOMPRESSED_R8G8B8A8
                     Texture2D texture = { rlGetTextureIdDefault(), 1, 1, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
@@ -1299,7 +1299,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
         else if ((keycode == AKEYCODE_BACK) || (keycode == AKEYCODE_MENU))
         {
-            // Eat BACK_BUTTON and AKEYCODE_MENU, just do nothing... and don't let to be handled by OS!
+            // Eat BACK_BUTTON and AKEYCODE_MENU, do nothing... and don't let to be handled by OS!
             return 1;
         }
         else if ((keycode == AKEYCODE_VOLUME_UP) || (keycode == AKEYCODE_VOLUME_DOWN))
@@ -1347,7 +1347,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
         }
     }
 
-#if defined(SUPPORT_GESTURES_SYSTEM)
+#if SUPPORT_GESTURES_SYSTEM
     GestureEvent gestureEvent = { 0 };
 
     gestureEvent.pointCount = 0;
@@ -1524,25 +1524,20 @@ static void SetupFramebuffer(int width, int height)
     }
 }
 
-// Replacement for fopen()
+// Replacement for fopen(), used as linker wrap entry point (-Wl,--wrap=fopen)
 // REF: https://developer.android.com/ndk/reference/group/asset
-FILE *android_fopen(const char *fileName, const char *mode)
+FILE *__wrap_fopen(const char *fileName, const char *mode)
 {
     FILE *file = NULL;
-    
+
+    // NOTE: AAsset provides access to read-only asset, write operations use regular fopen
     if (mode[0] == 'w')
     {
-        // NOTE: fopen() is mapped to android_fopen() that only grants read access to
-        // assets directory through AAssetManager but it could be required to write data
-        // using the standard stdio FILE access functions
-        // REF: https://stackoverflow.com/questions/11294487/android-writing-saving-files-from-native-code-only
-        #undef fopen
-        file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-        #define fopen(name, mode) android_fopen(name, mode)
+        file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+        if (file == NULL) file = __real_fopen(fileName, mode);
     }
     else
     {
-        // NOTE: AAsset provides access to read-only asset
         AAsset *asset = AAssetManager_open(platform.app->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
 
         if (asset != NULL)
@@ -1552,14 +1547,12 @@ FILE *android_fopen(const char *fileName, const char *mode)
         }
         else
         {
-            #undef fopen
-            // Just do a regular open if file is not found in the assets
-            file = fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
-            if (file == NULL) file = fopen(fileName, mode);
-            #define fopen(name, mode) android_fopen(name, mode)
+            // Do a regular open if file is not found in the assets
+            file = __real_fopen(TextFormat("%s/%s", platform.app->activity->internalDataPath, fileName), mode);
+            if (file == NULL) file = __real_fopen(fileName, mode);
         }
     }
-    
+
     return file;
 }
 

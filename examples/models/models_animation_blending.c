@@ -2,20 +2,19 @@
 *
 *   raylib [models] example - animation blending
 *
-*   Example complexity rating: [☆☆☆☆] 0/4
+*   Example complexity rating: [★★★★] 4/4
 * 
 *   Example originally created with raylib 5.5, last time updated with raylib 5.6-dev
 *
-*   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra)
+*   Example contributed by Kirandeep (@Kirandeep-Singh-Khehra) and reviewed by Ramon Santamaria (@raysan5)
+*
+*   WARNING: GPU skinning must be enabled in raylib with a compilation flag,
+*   if not enabled, CPU skinning will be used instead
 *
 *   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
 *   BSD-like license that allows static linking with closed source software
 *
-*   Copyright (c) 2024 Kirandeep (@Kirandeep-Singh-Khehra)
-* 
-*   Note: Due to limitations in the Apple OpenGL driver, this feature does not work on MacOS
-*   Note: This example uses CPU for updating meshes.
-*           For GPU skinning see comments with 'INFO:'.
+*   Copyright (c) 2024-2026 Kirandeep (@Kirandeep-Singh-Khehra) and Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -226,7 +225,7 @@ int main(void)
                 NULL, TextFormat("x%.1f", animFrameSpeed0), &animFrameSpeed0, 0.1f, 2.0f);
             GuiEnable();
             if (dropdownEditMode1) GuiDisable();
-            GuiSlider((Rectangle){ GetScreenWidth() - 170, 38, 160, 12 }, 
+            GuiSlider((Rectangle){ GetScreenWidth() - 170.0f, 38, 160, 12 }, 
                 TextFormat("%.1fx", animFrameSpeed1), NULL, &animFrameSpeed1, 0.1f, 2.0f);
             GuiEnable();
 
@@ -242,23 +241,23 @@ int main(void)
             GuiProgressBar((Rectangle){ 180, 14, 440, 16 }, NULL, NULL, &animBlendProgress, 0.0f, 1.0f);
             GuiSetStyle(PROGRESSBAR, PROGRESS_SIDE, 0); // Reset to Left-->Right
 
-            if (GuiDropdownBox((Rectangle){ GetScreenWidth() - 170, 10, 160, 24 }, TextJoin(animNames, animCount, ";"),
+            if (GuiDropdownBox((Rectangle){ GetScreenWidth() - 170.0f, 10, 160, 24 }, TextJoin(animNames, animCount, ";"),
                 &animIndex1, dropdownEditMode1)) dropdownEditMode1 = !dropdownEditMode1;
 
             // Draw playing timeline with keyframes for anim0[]
-            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60, GetScreenWidth() - 180, 20 }, "ANIM 0",
+            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 60.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 0",
                 TextFormat("FRAME: %.2f / %i", animFrameProgress0, anims[animIndex0].keyframeCount),
                 &animFrameProgress0, 0.0f, (float)anims[animIndex0].keyframeCount);
             for (int i = 0; i < anims[animIndex0].keyframeCount; i++)
-                DrawRectangle(60 + ((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i, 
+                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex0].keyframeCount)*(float)i), 
                     GetScreenHeight() - 60, 1, 20, BLUE);
 
             // Draw playing timeline with keyframes for anim1[]
-            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 30, GetScreenWidth() - 180, 20 }, "ANIM 1",
+            GuiProgressBar((Rectangle){ 60, GetScreenHeight() - 30.0f, GetScreenWidth() - 180.0f, 20 }, "ANIM 1",
                 TextFormat("FRAME: %.2f / %i", animFrameProgress1, anims[animIndex1].keyframeCount),
                 &animFrameProgress1, 0.0f, (float)anims[animIndex1].keyframeCount);
             for (int i = 0; i < anims[animIndex1].keyframeCount; i++)
-                DrawRectangle(60 + ((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i, 
+                DrawRectangle(60 + (int)(((float)(GetScreenWidth() - 180)/(float)anims[animIndex1].keyframeCount)*(float)i), 
                     GetScreenHeight() - 30, 1, 20, BLUE);
             //---------------------------------------------------------------------------------------------
 

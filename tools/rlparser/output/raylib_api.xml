@@ -2,10 +2,10 @@
 <raylibAPI>
     <Defines count="57">
         <Define name="RAYLIB_H" type="GUARD" value="" desc="" />
-        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="5" desc="" />
-        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="6" desc="" />
+        <Define name="RAYLIB_VERSION_MAJOR" type="INT" value="6" desc="" />
+        <Define name="RAYLIB_VERSION_MINOR" type="INT" value="0" desc="" />
         <Define name="RAYLIB_VERSION_PATCH" type="INT" value="0" desc="" />
-        <Define name="RAYLIB_VERSION" type="STRING" value="5.6-dev" desc="" />
+        <Define name="RAYLIB_VERSION" type="STRING" value="6.0" desc="" />
         <Define name="__declspec(x)" type="MACRO" value="__attribute__((x))" desc="" />
         <Define name="RLAPI" type="UNKNOWN" value="__declspec(dllexport)" desc="Building the library as a Win32 shared library (.dll)" />
         <Define name="PI" type="FLOAT" value="3.14159265358979323846" desc="" />
@@ -470,7 +470,7 @@
             <Value name="MOUSE_CURSOR_NOT_ALLOWED" integer="10" desc="The operation-not-allowed shape" />
         </Enum>
         <Enum name="GamepadButton" valueCount="18" desc="Gamepad buttons">
-            <Value name="GAMEPAD_BUTTON_UNKNOWN" integer="0" desc="Unknown button, just for error checking" />
+            <Value name="GAMEPAD_BUTTON_UNKNOWN" integer="0" desc="Unknown button, for error checking" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_UP" integer="1" desc="Gamepad left DPAD up button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_RIGHT" integer="2" desc="Gamepad left DPAD right button" />
             <Value name="GAMEPAD_BUTTON_LEFT_FACE_DOWN" integer="3" desc="Gamepad left DPAD down button" />
@@ -540,7 +540,7 @@
             <Value name="SHADER_LOC_VERTEX_BONEIDS" integer="26" desc="Shader location: vertex attribute: bone indices" />
             <Value name="SHADER_LOC_VERTEX_BONEWEIGHTS" integer="27" desc="Shader location: vertex attribute: bone weights" />
             <Value name="SHADER_LOC_MATRIX_BONETRANSFORMS" integer="28" desc="Shader location: matrix attribute: bone transforms (animation)" />
-            <Value name="SHADER_LOC_VERTEX_INSTANCETRANSFORMS" integer="29" desc="Shader location: vertex attribute: instance transforms" />
+            <Value name="SHADER_LOC_VERTEX_INSTANCETRANSFORM" integer="29" desc="Shader location: vertex attribute: instance transforms" />
         </Enum>
         <Enum name="ShaderUniformDataType" valueCount="13" desc="Shader uniform data type">
             <Value name="SHADER_UNIFORM_FLOAT" integer="0" desc="Shader uniform type: float" />
@@ -590,7 +590,7 @@
             <Value name="PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA" integer="24" desc="2 bpp" />
         </Enum>
         <Enum name="TextureFilter" valueCount="6" desc="Texture parameters: filter mode">
-            <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, just pixel approximation" />
+            <Value name="TEXTURE_FILTER_POINT" integer="0" desc="No filter, pixel approximation" />
             <Value name="TEXTURE_FILTER_BILINEAR" integer="1" desc="Linear filtering" />
             <Value name="TEXTURE_FILTER_TRILINEAR" integer="2" desc="Trilinear filtering (linear with mipmaps)" />
             <Value name="TEXTURE_FILTER_ANISOTROPIC_4X" integer="3" desc="Anisotropic filtering 4x" />

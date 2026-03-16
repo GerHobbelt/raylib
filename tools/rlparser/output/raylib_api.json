@@ -9,13 +9,13 @@
     {
       "name": "RAYLIB_VERSION_MAJOR",
       "type": "INT",
-      "value": 5,
+      "value": 6,
       "description": ""
     },
     {
       "name": "RAYLIB_VERSION_MINOR",
       "type": "INT",
-      "value": 6,
+      "value": 0,
       "description": ""
     },
     {
@@ -27,7 +27,7 @@
     {
       "name": "RAYLIB_VERSION",
       "type": "STRING",
-      "value": "5.6-dev",
+      "value": "6.0",
       "description": ""
     },
     {
@@ -2220,7 +2220,7 @@
         {
           "name": "GAMEPAD_BUTTON_UNKNOWN",
           "value": 0,
-          "description": "Unknown button, just for error checking"
+          "description": "Unknown button, for error checking"
         },
         {
           "name": "GAMEPAD_BUTTON_LEFT_FACE_UP",
@@ -2556,7 +2556,7 @@
           "description": "Shader location: matrix attribute: bone transforms (animation)"
         },
         {
-          "name": "SHADER_LOC_VERTEX_INSTANCETRANSFORMS",
+          "name": "SHADER_LOC_VERTEX_INSTANCETRANSFORM",
           "value": 29,
           "description": "Shader location: vertex attribute: instance transforms"
         }
@@ -2792,7 +2792,7 @@
         {
           "name": "TEXTURE_FILTER_POINT",
           "value": 0,
-          "description": "No filter, just pixel approximation"
+          "description": "No filter, pixel approximation"
         },
         {
           "name": "TEXTURE_FILTER_BILINEAR",
