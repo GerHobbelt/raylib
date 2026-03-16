@@ -3375,7 +3375,7 @@ Mesh GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
     Vector3 n5 = { 0.0f, 0.0f, -1.0f };
     Vector3 n6 = { 0.0f, 0.0f, 1.0f };
 
-    // NOTE: Using texture rectangles to define different 
+    // NOTE: Using texture rectangles to define different
     // textures for top-bottom-front-back-right-left (6)
     typedef struct RectangleF {
         float x;
@@ -3928,7 +3928,7 @@ void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rota
 
         // Upload runtime bone transforms matrices, to compute skinning on the shader (GPU-skinning)
         // NOTE: Required location must be found and Mesh bones indices and weights must be also uploaded to shader
-        if ((mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] != -1) && (model.boneMatrices != NULL))
+        if ((mat.shader.locs != NULL) && (mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS] != -1) && (model.boneMatrices != NULL))
         {
             rlEnableShader(mat.shader.id); // Enable shader to set bone transform matrices
             rlSetUniformMatrices(mat.shader.locs[SHADER_LOC_MATRIX_BONETRANSFORMS], model.boneMatrices, model.skeleton.boneCount);
@@ -5511,8 +5511,10 @@ static Model LoadGLTF(const char *fileName)
 
         if (dracoCompression)
         {
-            return model;
             TRACELOG(LOG_WARNING, "MODEL: [%s] Failed to load glTF data", fileName);
+            cgltf_free(data);
+            UnloadFileData(fileData);
+            return model;
         }
 
         TRACELOG(LOG_DEBUG, "    > Primitives (triangles only) count based on hierarchy : %i", primitivesCount);
@@ -6333,6 +6335,15 @@ static Model LoadGLTF(const char *fileName)
         model.boneMatrices = (Matrix *)RL_CALLOC(model.skeleton.boneCount, sizeof(Matrix));
         for (int j = 0; j < model.skeleton.boneCount; j++) model.boneMatrices[j] = MatrixIdentity();
         //----------------------------------------------------------------------------------------------------
+
+        // Free unused allocated memory in case of no bones defined
+        if (model.skeleton.boneCount == 0)
+        {
+            RL_FREE(model.currentPose);
+            RL_FREE(model.boneMatrices);
+            model.currentPose = NULL;
+            model.boneMatrices = NULL;
+        }
 
         // Free all cgltf loaded data
         cgltf_free(data);
