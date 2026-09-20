@@ -1,18 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-/// Minimum supported version of Zig
-const min_ver = "0.16.0-dev.3013+abd131e33";
-
 const emccOutputDir = "zig-out" ++ std.fs.path.sep_str ++ "htmlout" ++ std.fs.path.sep_str;
 const emccOutputFile = "index.html";
-
-comptime {
-    const order = std.SemanticVersion.order;
-    const parse = std.SemanticVersion.parse;
-    if (order(builtin.zig_version, parse(min_ver) catch unreachable) == .lt)
-        @compileError("Raylib requires zig version " ++ min_ver);
-}
 
 pub const emsdk = struct {
     const zemscripten = @import("zemscripten");
@@ -202,8 +192,10 @@ fn compileRaylib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.
                     raylib.root_module.addCMacro("GRAPHICS_API_OPENGL_ES2", "");
                 }
 
-                raylib.root_module.linkSystemLibrary("EGL", .{});
-                raylib.root_module.linkSystemLibrary("gbm", .{});
+                if (options.opengl_version != .gl_soft) {
+                    raylib.root_module.linkSystemLibrary("EGL", .{});
+                    raylib.root_module.linkSystemLibrary("gbm", .{});
+                }
                 raylib.root_module.linkSystemLibrary("libdrm", .{ .use_pkg_config = .force });
 
                 raylib.root_module.addCMacro("PLATFORM_DRM", "");
@@ -416,6 +408,7 @@ pub const Options = struct {
 
 pub const OpenglVersion = enum {
     auto,
+    gl_soft,
     gl_1_1,
     gl_2_1,
     gl_3_3,
@@ -426,6 +419,7 @@ pub const OpenglVersion = enum {
     pub fn toCMacroStr(self: @This()) []const u8 {
         switch (self) {
             .auto => @panic("OpenglVersion.auto cannot be turned into a C macro string"),
+            .gl_soft => return "GRAPHICS_API_OPENGL_SOFTWARE",
             .gl_1_1 => return "GRAPHICS_API_OPENGL_11",
             .gl_2_1 => return "GRAPHICS_API_OPENGL_21",
             .gl_3_3 => return "GRAPHICS_API_OPENGL_33",
@@ -485,7 +479,7 @@ fn addExamples(
     const all = b.step(module, "All " ++ module ++ " examples");
     const module_subpath = b.pathJoin(&.{ "examples", module });
 
-    var dir = try std.Io.Dir.cwd().openDir(b.graph.io, b.pathFromRoot(module_subpath), .{ .iterate = true });
+    var dir = try b.build_root.handle.openDir(b.graph.io, module_subpath, .{ .iterate = true });
     defer dir.close(b.graph.io);
 
     var iter = dir.iterate();

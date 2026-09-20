@@ -723,7 +723,7 @@ void SetWindowIcon(Image image)
         TRACELOG(LOG_WARNING, "RGFW: Window icon image must be in R8G8B8A8 pixel format");
         return;
     }
-    RGFW_window_setIcon(platform.window, (u8 *)image.data, image.width, image.height, 4);
+    RGFW_window_setIcon(platform.window, (u8 *)image.data, image.width, image.height, RGFW_formatRGBA8);
 }
 
 // Set icon for window
@@ -749,8 +749,8 @@ void SetWindowIcons(Image *images, int count)
             if ((smallIcon == NULL) || ((images[i].width < smallIcon->width) && (images[i].height > smallIcon->height))) smallIcon = &images[i];
         }
 
-        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, smallIcon->width, smallIcon->height, 4, RGFW_iconWindow);
-        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, bigIcon->width, bigIcon->height, 4, RGFW_iconTaskbar);
+        if (smallIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)smallIcon->data, smallIcon->width, smallIcon->height, RGFW_formatRGBA8, RGFW_iconWindow);
+        if (bigIcon != NULL) RGFW_window_setIconEx(platform.window, (u8 *)bigIcon->data, bigIcon->width, bigIcon->height, RGFW_formatRGBA8, RGFW_iconTaskbar);
     }
 }
 
@@ -819,6 +819,11 @@ void SetWindowSize(int width, int height)
     {
         CORE.Window.screen.width = width;
         CORE.Window.screen.height = height;
+    }
+
+    if (!CORE.Window.usingFbo)
+    {
+        SetupViewport(CORE.Window.screen.width, CORE.Window.screen.height);
     }
 
     RGFW_window_resize(platform.window, CORE.Window.screen.width, CORE.Window.screen.height);
@@ -1126,7 +1131,9 @@ void SwapScreenBuffer(void)
 // Get elapsed time measure in seconds since InitTimer()
 double GetTime(void)
 {
-    double time = get_time_seconds() - CORE.Time.base;
+    // CORE.Time.base is nanoseconds as integer
+    double baseTime = (double)CORE.Time.base*1e-9;
+    double time = get_time_seconds() - baseTime;
 
     return time;
 }
@@ -1649,7 +1656,6 @@ int InitPlatform(void)
 
     RGFW_setGlobalHints_OpenGL(hints);
     platform.window = RGFW_createWindow((CORE.Window.title != 0)? CORE.Window.title : " ", 0, 0, CORE.Window.screen.width, CORE.Window.screen.height, flags | RGFW_windowOpenGL);
-    CORE.Time.base = get_time_seconds();
 
 #ifndef PLATFORM_WEB_RGFW
     i32 screenSizeWidth;
@@ -1714,7 +1720,8 @@ int InitPlatform(void)
         #endif
     }
 
-    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully");
+    TRACELOG(LOG_INFO, "DISPLAY: Device initialized successfully %s",
+        FLAG_IS_SET(CORE.Window.flags, FLAG_WINDOW_HIGHDPI)? "(HighDPI)" : "");
     TRACELOG(LOG_INFO, "    > Display size: %i x %i", CORE.Window.display.width, CORE.Window.display.height);
     TRACELOG(LOG_INFO, "    > Screen size:  %i x %i", CORE.Window.screen.width, CORE.Window.screen.height);
     TRACELOG(LOG_INFO, "    > Render size:  %i x %i", CORE.Window.render.width, CORE.Window.render.height);
@@ -1786,34 +1793,36 @@ double get_time_seconds(void)
 
     #if defined(_WIN32)
         static LARGE_INTEGER freq = { 0 };
-        static int freq_init = 0;
-        LARGE_INTEGER counter;
-        if (!freq_init) {
+        static bool freqInitialized = false;
+        LARGE_INTEGER counter = { 0 };
+        if (!freqInitialized)
+        {
+            // Lazy initialization
             QueryPerformanceFrequency(&freq);
-            freq_init = 1;
+            freqInitialized = true;
         }
         QueryPerformanceCounter(&counter);
-        currentTime = (double)counter.QuadPart / (double)freq.QuadPart;
+        currentTime = (double)counter.QuadPart/(double)freq.QuadPart;
     #elif defined(__EMSCRIPTEN__)
-        currentTime = emscripten_get_now() / 1000.0;
+        currentTime = emscripten_get_now()/1000.0;
     #elif defined(__APPLE__)
-        static mach_timebase_info_data_t tb;
-        static int tb_initialized = 0;
-
-        if (!tb_initialized) {
+        static mach_timebase_info_data_t tb = { 0 };
+        static bool tbInitialized = false;
+        if (!tbInitialized)
+        {
             mach_timebase_info(&tb);
-            tb_initialized = 1;
+            tbInitialized = true;
         }
         uint64_t ticks = mach_absolute_time();
 
-        currentTime = (double)ticks * (double)tb.numer / (double)tb.denom / 1e9;
+        currentTime = (double)ticks*(double)tb.numer/(double)tb.denom/1e9;
     #elif defined(__linux__)
-        struct timespec ts;
+        struct timespec ts = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        currentTime = (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+        currentTime = (double)ts.tv_sec + (double)ts.tv_nsec/1e9;
     #else
-        // fallback to cstd
-        currentTime = (double)clock() / (double)CLOCKS_PER_SEC;
+        // Fallback to cstd
+        currentTime = (double)clock()/(double)CLOCKS_PER_SEC;
     #endif
 
     return currentTime;
