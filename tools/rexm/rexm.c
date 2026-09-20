@@ -133,7 +133,7 @@ typedef enum {
     TESTING_FAIL_ASSETS         = 1 << 2,   // Assets loading (WARNING: FILE:)  -> "WARNING: FILEIO:"
     TESTING_FAIL_RLGL           = 1 << 3,   // OpenGL-wrapped initialization    -> "INFO: RLGL: Default OpenGL state initialized successfully"
     TESTING_FAIL_PLATFORM       = 1 << 4,   // Platform initialization          -> "INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully"
-    TESTING_FAIL_FONT           = 1 << 5,   // Font deefault initialization     -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
+    TESTING_FAIL_FONT           = 1 << 5,   // Font default initialization      -> "INFO: FONT: Default font loaded successfully (224 glyphs)"
     TESTING_FAIL_TIMER          = 1 << 6,   // Timer initialization             -> "INFO: TIMER: Target time per frame: 16.667 milliseconds"
     TESTING_FAIL_OTHER          = 1 << 7,   // Other types of warnings (WARNING:)
 } rlExampleTestingStatus;
@@ -150,6 +150,7 @@ typedef enum {
     OP_BUILD    = 7,        // Build example(s) for desktop and web, copy web output - Multiple examples supported
     OP_TEST     = 8,        // Test example(s), checking output log "WARNING" - Multiple examples supported
     OP_TESTLOG  = 9,        // Process available examples logs to generate report
+    OP_CLEAN    = 10,       // Delete files generated during other commands, excluding reports
 } rlExampleOperation;
 
 static const char *exCategories[REXM_MAX_EXAMPLE_CATEGORIES] = { "core", "shapes", "textures", "text", "models", "shaders", "audio" };
@@ -242,6 +243,38 @@ int main(int argc, char *argv[])
     if (!exCollectionFilePath) exCollectionFilePath = "../../examples/examples_list.txt";
     if (!exVSProjectSolutionFile) exVSProjectSolutionFile = "../../projects/VS2022/raylib.sln";
 #endif
+
+    // Make sure required paths exist
+    if (!DirectoryExists(exBasePath))
+    {
+        LOG("ERROR: Could not find raylib examples directory (hint: environment variable 'REXM_EXAMPLES_BASE_PATH')\n");
+        return 1;
+    }
+    if (!DirectoryExists(exWebPath))
+    {
+        LOG("ERROR: Could not find raylib.com examples directory (hint: environment variable 'REXM_EXAMPLES_WEB_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exTemplateFilePath))
+    {
+        LOG("ERROR: Could not find examples template file (hint: environment variable 'REXM_EXAMPLES_TEMPLATE_FILE_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exTemplateScreenshot))
+    {
+        LOG("ERROR: Could not find examples template screenshot (hint: environment variable 'REXM_EXAMPLES_TEMPLATE_SCREENSHOT_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exCollectionFilePath))
+    {
+        LOG("ERROR: Could not find examples collection file (hint: environment variable 'REXM_EXAMPLES_COLLECTION_FILE_PATH')\n");
+        return 1;
+    }
+    if (!FileExists(exVSProjectSolutionFile))
+    {
+        LOG("ERROR: Could not find VS solution file (hint: environment variable 'REXM_EXAMPLES_VS2022_SLN_FILE')\n");
+        return 1;
+    }
 
     char inFileName[1024] = { 0 };  // Example input filename (to be added)
 
@@ -446,6 +479,12 @@ int main(int argc, char *argv[])
                     else if (strcmp(argv[1], "testlog") == 0) opCode = OP_TESTLOG;
                 }
             }
+        }
+        else if (strcmp(argv[1], "clean") == 0)
+        {
+            // Delete files generated during other commands, excluding reports
+
+            opCode = OP_CLEAN;
         }
 
         // Process command line options arguments
@@ -671,7 +710,7 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
 
             // Recompile example (on raylib side)
-            // NOTE: Tools requirements: emscripten, w64devkit
+            // NOTE: Tools requirements: emscripten, make
             // Compile to: raylib.com/examples/<category>/<category>_example_name.html
             // Compile to: raylib.com/examples/<category>/<category>_example_name.data
             // Compile to: raylib.com/examples/<category>/<category>_example_name.wasm
@@ -681,7 +720,6 @@ int main(int argc, char *argv[])
             // WARNING 2: raylib.a and raylib.web.a must be available when compiling locally
 #if defined(_WIN32)
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", GetFileNameWithoutExt(inFileName));
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
 #else
             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", GetFileNameWithoutExt(inFileName));
 #endif
@@ -714,9 +752,9 @@ int main(int argc, char *argv[])
             // exName, exCategory, exRename, exRecategory
             if (strcmp(exCategory, exRecategory) == 0)
             {
-                // Rename example on collection
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
-                    TextFormat("%s;%s", exRecategory, exRename));
+                // Rename example in collection
+                FileTextReplace(exCollectionFilePath, TextFormat("\n%s;%s;", exCategory, exName),
+                    TextFormat("\n%s;%s;", exRecategory, exRename));
 
                 // Edit: Rename example code and screenshot files .c and .png
                 FileRename(TextFormat("%s/%s/%s.c", exBasePath, exCategory, exName),
@@ -754,8 +792,8 @@ int main(int argc, char *argv[])
             {
                 // WARNING: Rename with change of category
                 // TODO: Reorder collection to place renamed example at the end of category
-                FileTextReplace(exCollectionFilePath, TextFormat("%s;%s", exCategory, exName),
-                    TextFormat("%s;%s", exRecategory, exRename));
+                FileTextReplace(exCollectionFilePath, TextFormat("\n%s;%s;", exCategory, exName),
+                    TextFormat("\n%s;%s;", exRecategory, exRename));
 
                 // TODO: Move example resources from <exCategory>/resources to <exRecategory>/resources
                 // WARNING: Resources can be shared with other examples in the category
@@ -781,9 +819,6 @@ int main(int argc, char *argv[])
 
             // Recompile example (on raylib side)
             // WARNING: EMSDK_PATH must be set to proper location when calling from GitHub Actions
-#if defined(_WIN32)
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-#endif
             system(TextFormat("make -C %s -f Makefile.Web %s/%s PLATFORM=PLATFORM_WEB -B", exBasePath, exRecategory, exRename));
 
             // Update generated .html metadata
@@ -802,14 +837,13 @@ int main(int argc, char *argv[])
 
 #if defined(RENAME_AUTO_COMMIT_CREATION)
             // Create GitHub commit with changes (local)
-            putenv("PATH=%PATH%;C:\\Program Files\\Git\\bin");
-            ChangeDirectory("C:\\GitHub\\raylib");
+            ChangeDirectory(TextFormat("%s/..", exBasePath));
             system("git --version");
             system("git status");
             system("git add -A");
             int result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
-            ChangeDirectory("C:/GitHub/raylib.com");
+            ChangeDirectory(TextFormat("%s/..", exWebPath));
             system("git add -A");
             result = system(TextFormat("git commit -m \"REXM: RENAME: example: `%s` --> `%s`\"", exName, exRename)); // Commit changes (only tracked files)
             if (result != 0) LOG("WARNING: Error committing changes\n");
@@ -827,9 +861,13 @@ int main(int argc, char *argv[])
             //------------------------------------------------------------------------------------------------
             LOG("INFO: [%s] Removing example from collection\n", exName);
             char *exCollectionList = LoadFileText(exCollectionFilePath);
-            int exIndex = TextFindIndex(exCollectionList, TextFormat("%s;%s", exCategory, exName));
+            // '\n' is used so that the search is anchored at the start of the line.
+            int exIndex = TextFindIndex(exCollectionList, TextFormat("\n%s;%s;", exCategory, exName));
             if (exIndex > 0) // Example found
             {
+                // The index we want is the index after the '\n' character.
+                exIndex += 1;
+
                 char *exCollectionListUpdated = (char *)RL_CALLOC(REXM_MAX_BUFFER_SIZE, 1); // Updated list copy, 2MB
 
                 memcpy(exCollectionListUpdated, exCollectionList, exIndex);
@@ -917,13 +955,6 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: BUILD\n");
             LOG("INFO: Example(s) to be built: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-#if defined(_WIN32)
-            // Set required environment variables
-            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=make");
-            //ChangeDirectory(exBasePath);
-#endif
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -1319,7 +1350,6 @@ int main(int argc, char *argv[])
                             // Build example for PLATFORM_WEB
                         #if defined(_WIN32)
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: Win32)\n", exInfo->name);
-                            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
                         #else
                             LOG("INFO: [%s] Building example for PLATFORM_WEB (Host: POSIX)\n", exInfo->name);
                         #endif
@@ -1498,21 +1528,6 @@ int main(int argc, char *argv[])
             LOG("INFO: Command requested: TEST\n");
             LOG("INFO: Example(s) to be build and tested: %i [%s]\n", exBuildListCount, (exBuildListCount == 1)? exBuildList[0] : argv[2]);
 
-#if defined(_WIN32)
-            // Set required environment variables
-            //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-            //_putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-            //putenv("MAKE=make");
-            //ChangeDirectory(exBasePath);
-            //_putenv("MAKE_PATH=C:\\raylib\\w64devkit\\bin");
-            //_putenv("EMSDK_PATH = C:\\raylib\\emsdk");
-            //_putenv("PYTHON_PATH=$(EMSDK_PATH)\\python\\3.13.3_64bit");
-            //_putenv("NODE_PATH=$(EMSDK_PATH)\\node\\22.16.0_64bit\\bin");
-            //_putenv("PATH=%PATH%;$(MAKE_PATH);$(EMSDK_PATH);$(NODE_PATH);$(PYTHON_PATH)");
-
-            _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin;C:\\raylib\\emsdk\\python\\3.13.3_64bit;C:\\raylib\\emsdk\\node\\22.16.0_64bit\\bin");
-#endif
-
             for (int i = 0; i < exBuildListCount; i++)
             {
                 // Get example name and category
@@ -1618,8 +1633,8 @@ int main(int argc, char *argv[])
                     // WARNING: Example download is asynchronous so reading fails on next step
                     // when looking for a file that could not have been downloaded yet
                     ChangeDirectory(TextFormat("%s", exBasePath));
-                    if (i == 0) system("start python -m http.server 8080"); // Init localhost just once
-                    system(TextFormat("start explorer \"http:\\localhost:8080/%s/%s.html", exCategory, exName));
+                    if (i == 0) system("start python -m http.server 38080"); // Init localhost just once
+                    system(TextFormat("start explorer \"http:\\localhost:38080/%s/%s.html", exCategory, exName));
                 }
 
                 // NOTE: Example .log is automatically downloaded into system Downloads directory on browser-example exectution
@@ -1644,13 +1659,6 @@ int main(int argc, char *argv[])
                 for (int i = 0; i < 3; i++) { MemFree(srcTextUpdated[i]); srcTextUpdated[i] = NULL; }
 
                 // STEP 2: Build example for DESKTOP platform
-    #if defined(_WIN32)
-                // Set required environment variables
-                //putenv(TextFormat("RAYLIB_DIR=%s\\..", exBasePath));
-                _putenv("PATH=%PATH%;C:\\raylib\\w64devkit\\bin");
-                //putenv("MAKE=make");
-                //ChangeDirectory(exBasePath);
-    #endif
                 // Build example for PLATFORM_DESKTOP
     #if defined(_WIN32)
                 LOG("INFO: [%s] Building example for PLATFORM_DESKTOP (Host: Win32)\n", exName);
@@ -1867,6 +1875,56 @@ int main(int argc, char *argv[])
             //-----------------------------------------------------------------------------------------------------
 
         } break;
+        case OP_CLEAN:  // Clean
+        {
+            LOG("INFO: Command requested: CLEAN\n");
+
+            int filesDeleted = 0;
+
+            for (int i = 0; i < REXM_MAX_EXAMPLE_CATEGORIES; i++)
+            {
+                FilePathList pathList = LoadDirectoryFiles(TextFormat("%s/%s", exBasePath, exCategories[i]));
+
+                for (int i = 0; i < pathList.count; i++)
+                {
+                    const char *path = pathList.paths[i];
+
+                    if (IsPathFile(path))
+                    {
+                        const char *extension = GetFileExtension(path);
+                        if ((strcmp(extension, ".exe") == 0) ||     // Windows executable
+                            (extension == NULL) ||                  // Executable for non-Windows platforms
+                            (strcmp(extension, ".html") == 0) ||    // Web build output
+                            (strcmp(extension, ".js") == 0) ||      // Web build output
+                            (strcmp(extension, ".wasm") == 0) ||    // Web build output
+                            (strcmp(extension, ".data") == 0))      // Web build output
+                        {
+                            LOG("INFO: Deleting file [%s]\n", path);
+                            FileRemove(path);
+                            filesDeleted += 1;
+                        }
+                    }
+                }
+
+                UnloadDirectoryFiles(pathList);
+
+                // OP_TEST creates a 'logs' directory inside of example category directories
+                // Raylib currently has no way of deleting directories...
+                // We can at least delete the files
+                FilePathList logsPathList = LoadDirectoryFiles(TextFormat("%s/%s/logs", exBasePath, exCategories[i]));
+                for (int i = 0; i < logsPathList.count; i++)
+                {
+                    const char *logPath = logsPathList.paths[i];
+                    LOG("INFO: Deleting file [%s]\n", logPath);
+                    FileRemove(logPath);
+                    filesDeleted += 1;
+                }
+
+                UnloadDirectoryFiles(logsPathList);
+            }
+
+            LOG("INFO: Deleted %d files\n", filesDeleted);
+        } break;
         default:    // Help
         {
             // Supported commands:
@@ -1897,9 +1955,11 @@ int main(int argc, char *argv[])
             printf("    rename <old_examples_name> <new_example_name> : Rename an existing example\n");
             printf("    remove <example_name>         : Remove an existing example\n");
             printf("    build <example_name>          : Build example for Desktop and Web platforms\n");
-            printf("    test <example_name>           : Build and Test example for Desktop and Web platforms\n");
+            printf("    test <example_name>           : Build and test example for Desktop and Web platforms\n");
+            printf("    testlog <example_name>        : Validate test logs, generates report\n");
             printf("    validate                      : Validate examples collection, generates report\n");
-            printf("    update                        : Validate and update examples collection, generates report\n\n");
+            printf("    update                        : Validate and update examples collection, generates report\n");
+            printf("    clean                         : Delete files generated during other commands, excluding reports\n\n");
 
             printf("OPTIONS:\n\n");
             printf("    -h, --help                    : Show tool version and command line usage help\n");

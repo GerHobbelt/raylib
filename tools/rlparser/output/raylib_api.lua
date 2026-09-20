@@ -1411,8 +1411,8 @@ return {
       description = "Camera type fallback, defaults to Camera3D"
     },
     {
-      type = "Transform",
-      name = "*ModelAnimPose",
+      type = "Transform *",
+      name = "ModelAnimPose",
       description = "Anim pose, an array of Transform[]"
     }
   },
@@ -4094,6 +4094,14 @@ return {
       }
     },
     {
+      name = "IsFileHidden",
+      description = "Check if file path (file or directory) is hidden by OS",
+      returnType = "bool",
+      params = {
+        {type = "const char *", name = "filePath"}
+      }
+    },
+    {
       name = "GetFileLength",
       description = "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)",
       returnType = "int",
@@ -6534,6 +6542,16 @@ return {
       params = {
         {type = "int", name = "width"},
         {type = "int", name = "height"}
+      }
+    },
+    {
+      name = "LoadRenderTextureEx",
+      description = "Load texture for rendering (framebuffer), with specific format",
+      returnType = "RenderTexture2D",
+      params = {
+        {type = "int", name = "width"},
+        {type = "int", name = "height"},
+        {type = "int", name = "format"}
       }
     },
     {
