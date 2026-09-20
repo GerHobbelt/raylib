@@ -90,12 +90,12 @@ static float EaseCubicInOut(float t, float b, float c, float d);    // Cubic eas
 // Set texture and rectangle to be used on shapes drawing
 // NOTE: It can be useful when using basic shapes and one single font,
 // defining a font char white rectangle would allow drawing everything in a single draw call
-void SetShapesTexture(Texture2D texture, Rectangle source)
+void SetShapesTexture(Texture2D texture, Rectangle rec)
 {
     // Reset texture to default pixel if required
     // WARNING: Shapes texture should be probably better validated,
     // it can break the rendering of all shapes if misused
-    if ((texture.id == 0) || (source.width == 0) || (source.height == 0))
+    if ((texture.id == 0) || (rec.width == 0) || (rec.height == 0))
     {
         texShapes = (Texture2D){ 1, 1, 1, 1, 7 };
         texShapesRec = (Rectangle){ 0.0f, 0.0f, 1.0f, 1.0f };
@@ -103,7 +103,7 @@ void SetShapesTexture(Texture2D texture, Rectangle source)
     else
     {
         texShapes = texture;
-        texShapesRec = source;
+        texShapesRec = rec;
     }
 }
 
@@ -361,7 +361,7 @@ void DrawCircleSector(Vector2 center, float radius, float startAngle, float endA
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
 
         if (segments <= 0) segments = minSegments;
     }
@@ -453,7 +453,7 @@ void DrawCircleSectorLines(Vector2 center, float radius, float startAngle, float
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
 
         if (segments <= 0) segments = minSegments;
     }
@@ -579,7 +579,7 @@ void DrawRing(Vector2 center, float innerRadius, float outerRadius, float startA
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
 
         if (segments <= 0) segments = minSegments;
     }
@@ -670,7 +670,7 @@ void DrawRingLines(Vector2 center, float innerRadius, float outerRadius, float s
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/outerRadius, 2) - 1);
-        segments = (int)((endAngle - startAngle)*ceilf(2*PI/th)/360);
+        segments = (int)ceilf((endAngle - startAngle)*(2*PI/th)/360.0f);
 
         if (segments <= 0) segments = minSegments;
     }
@@ -960,7 +960,7 @@ void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color co
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)(ceilf(2*PI/th)/4.0f);
+        segments = (int)ceilf((2*PI/th)/4.0f);
         if (segments <= 0) segments = 4;
     }
 
@@ -1195,7 +1195,7 @@ void DrawRectangleRoundedLinesEx(Rectangle rec, float roundness, int segments, f
     {
         // Calculate the maximum angle between segments based on the error rate (usually 0.5f)
         float th = acosf(2*powf(1 - SMOOTH_CIRCLE_ERROR_RATE/radius, 2) - 1);
-        segments = (int)(ceilf(2*PI/th)/2.0f);
+        segments = (int)ceilf((2*PI/th)/4.0f);
         if (segments <= 0) segments = 4;
     }
 
@@ -1434,7 +1434,7 @@ void DrawTriangleGradient(Vector2 v1, Vector2 v2, Vector2 v3, Color c1, Color c2
 
     rlBegin(RL_QUADS);
         rlNormal3f(0.0f, 0.0f, 1.0f);
-        
+
         rlColor4ub(c1.r, c1.g, c1.b, c1.a);
         rlTexCoord2f(shapeRect.x/texShapes.width, shapeRect.y/texShapes.height);
         rlVertex2f(v1.x, v1.y);

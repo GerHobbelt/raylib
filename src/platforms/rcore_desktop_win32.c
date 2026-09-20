@@ -1023,7 +1023,7 @@ void SetWindowFocused(void)
 // Get native window handle
 void *GetWindowHandle(void)
 {
-    return platform.hwnd;
+    return (void *)platform.hwnd;
 }
 
 int GetMonitorCount(void)
@@ -1257,8 +1257,9 @@ void OpenURL(const char *url)
     if (strchr(url, '\'') != NULL) TRACELOG(LOG_WARNING, "SYSTEM: Provided URL could be potentially malicious, avoid [\'] character");
     else
     {
-        char *cmd = (char *)RL_CALLOC(strlen(url) + 32, sizeof(char));
-        sprintf(cmd, "explorer \"%s\"", url);
+        int len = strlen(url) + 32;
+        char *cmd = (char *)RL_CALLOC(len, sizeof(char));
+        snprintf(cmd, len, "explorer \"%s\"", url);
         int result = system(cmd);
         if (result == -1) TRACELOG(LOG_WARNING, "OpenURL() child process could not be created");
         RL_FREE(cmd);
@@ -1526,7 +1527,6 @@ int InitPlatform(void)
         if (hr < 0) TRACELOG(LOG_ERROR, "%s failed, hresult=0x%lx", "SetProcessDpiAwareness", (DWORD)hr);
     }
 */
-
     HINSTANCE hInstance = GetModuleHandleW(0);
 
     // Define window class
@@ -1775,9 +1775,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             // WARNING: Don't trust the docs, they say this message can not be obtained if not calling DefWindowProc()
             // in response to WM_WINDOWPOSCHANGED but looks like when a window is created,
             // this message can be obtained without getting WM_WINDOWPOSCHANGED
-            
+
 #if defined(GRAPHICS_API_OPENGL_SOFTWARE)
-            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later 
+            // WARNING: Waiting two frames before resizing because software-renderer backend is initilized with swInit() later
             // than InitPlatform(), that triggers WM_SIZE, so avoid crashing
             if (CORE.Time.frameCounter > 2) HandleWindowResize(hwnd, &platform.appScreenWidth, &platform.appScreenHeight);
 #else
@@ -2053,8 +2053,11 @@ static void HandleMouseButton(int button, char state)
 static void HandleRawInput(LPARAM lparam)
 {
     RAWINPUT input = { 0 };
+    UINT inputSize = 0;
 
-    UINT inputSize = sizeof(input);
+    if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &inputSize, sizeof(RAWINPUTHEADER)) != 0) return;
+    if (inputSize > sizeof(input)) return;
+
     UINT size = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &input, &inputSize, sizeof(RAWINPUTHEADER));
 
     if (size == (UINT)-1) TRACELOG(LOG_ERROR, "WIN32: Failed to get raw input data [ERROR: %lu]", GetLastError());
