@@ -3965,7 +3965,8 @@ void ImageDrawRectangleLinesEx(Image *dst, Rectangle rec, int thick, Color color
 // Draw rectangle with gradient colors within an image, counter-clockwise color order
 void ImageDrawRectangleGradientEx(Image *dst, Rectangle rec, Color col1, Color col2, Color col3, Color col4)
 {
-    if ((dst == NULL) || (rec.width <= 0) || (rec.height <= 0)) return;
+    // Security checks to avoid program crash
+    if ((dst == NULL) || (dst->data == NULL) || (rec.width <= 0) || (rec.height <= 0)) return;
 
     int x0 = (int)floorf(rec.x);
     int y0 = (int)floorf(rec.y);
@@ -4079,7 +4080,51 @@ void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color)
 // Draw a gradient-filled circle within an image
 void ImageDrawCircleGradient(Image *dst, Vector2 center, float radius, Color inner, Color outer)
 {
-    // TODO: NEW: Implement ImageDrawCircleGradient()
+    // Security checks to avoid program crash
+    if ((dst == NULL) || (dst->data == NULL) || (radius <= 0.0f)) return;
+
+    int x0 = (int)floorf(center.x - radius);
+    int y0 = (int)floorf(center.y - radius);
+    int x1 = (int)ceilf(center.x + radius);
+    int y1 = (int)ceilf(center.y + radius);
+
+    // Limit drawing to image bounds
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > dst->width)  x1 = dst->width;
+    if (y1 > dst->height) y1 = dst->height;
+
+    if ((x0 >= x1) || (y0 >= y1)) return;
+
+    float radiusSq = radius*radius;
+
+    for (int y = y0; y < y1; y++)
+    {
+        for (int x = x0; x < x1; x++)
+        {
+            // Center relative to circle center
+            float dx = (x + 0.5f) - center.x;
+            float dy = (y + 0.5f) - center.y;
+
+            float distSq = dx*dx + dy*dy;
+
+            // Skip pixels outside the circle
+            if (distSq > radiusSq) continue;
+
+            // Linear interpolation from inner to outer color
+            // TODO: Consider other types of interpolation for better results?
+            float t = sqrtf(distSq)/radius;
+            Color color = {
+                (unsigned char)(inner.r + (outer.r - inner.r)*t),
+                (unsigned char)(inner.g + (outer.g - inner.g)*t),
+                (unsigned char)(inner.b + (outer.b - inner.b)*t),
+                (unsigned char)(inner.a + (outer.a - inner.a)*t)
+            };
+
+            // NOTE: Pixel format conversion managed by ImageDrawPixel()
+            ImageDrawPixel(dst, x, y, color);
+        }
+    }
 }
 
 // Draw an image within an image
@@ -4107,8 +4152,8 @@ void ImageDrawImageRec(Image *dst, Image src, Rectangle srcRec, Vector2 position
 // TODO: REVIEW: ImageDrawImagePro(), implement origin and rotation for image drawing
 void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Vector2 origin, float rotation, Color tint)
 {
-    // Security check to avoid program crash
-    if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
+    // Security checks to avoid program crash
+    if ((dst == NULL) || (dst->data == NULL) || (dst->width == 0) || (dst->height == 0) ||
         (src.data == NULL) || (src.width == 0) || (src.height == 0)) return;
 
     if (dst->format >= PIXELFORMAT_COMPRESSED_DXT1_RGB) TRACELOG(LOG_WARNING, "Image drawing not supported for compressed formats");
@@ -4170,7 +4215,7 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
 
         Color colSrc = { 0 };
         Color colDst = { 0 };
-        Color blend = { 0 };
+        Color colBlend = { 0 };
         bool blendRequired = true;
 
         // Fast path: Avoid blend if source has no alpha to blend
@@ -4208,10 +4253,10 @@ void ImageDrawImagePro(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec
                     colDst = GetPixelColor(pDst, dst->format);
 
                     // Fast path: Avoid blend if source has no alpha to blend
-                    if (blendRequired) blend = ColorAlphaBlend(colDst, colSrc, tint);
-                    else blend = colSrc;
+                    if (blendRequired) colBlend = ColorAlphaBlend(colDst, colSrc, tint);
+                    else colBlend = colSrc;
 
-                    SetPixelColor(pDst, blend, dst->format);
+                    SetPixelColor(pDst, colBlend, dst->format);
 
                     pDst += bytesPerPixelDst;
                     pSrc += bytesPerPixelSrc;
@@ -4674,7 +4719,7 @@ void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
 // Draw a texture with position defined as Vector2
 void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
 {
-    DrawTextureEx(texture, position, 0, 1.0f, tint);
+    DrawTextureEx(texture, position, 0.0f, 1.0f, tint);
 }
 
 // Draw a texture with rotation and scale
