@@ -1492,28 +1492,34 @@ void PollInputEvents(void)
 
             case SDL_DROPFILE:      // Dropped file
             {
-                if (CORE.Window.dropFileCount == 0)
-                {
-                    int newCount = CORE.Window.dropFileCount + 1;
+                // NOTE: SDL sends one event per file, so every event adds a new path to the list
+                int newCount = CORE.Window.dropFileCount + 1;
 
-                    // 1. Reallocate array to fit the new file path pointer
-                    char **tempPaths = (char **)RL_REALLOC(CORE.Window.dropFilepaths, newCount * sizeof(char *));
+                // Reallocate array to fit the new file path pointer
+                char **tempPaths = (char **)RL_REALLOC(CORE.Window.dropFilepaths, newCount*sizeof(char *));
+
+                if (tempPaths != NULL)
+                {
                     CORE.Window.dropFilepaths = tempPaths;
-            
-                    // 2. Allocate memory for the file path string itself
+
+                    // Allocate memory for the file path string itself
                     CORE.Window.dropFilepaths[CORE.Window.dropFileCount] = (char *)RL_CALLOC(MAX_FILEPATH_LENGTH, sizeof(char));
 
                     if (CORE.Window.dropFilepaths[CORE.Window.dropFileCount] != NULL)
                     {
-                        // 3. Copy the path data from SDL to our internal list
-                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", DROP_EVENT_DATA);
+                        // Copy the path data from SDL to our internal list
+                        #if defined(USING_VERSION_SDL3)
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.data);
+                        #else
+                        snprintf(CORE.Window.dropFilepaths[CORE.Window.dropFileCount], MAX_FILEPATH_LENGTH, "%s", event.drop.file);
+                        #endif
                         CORE.Window.dropFileCount++;
                     }
-            
-                    // 4. Free event memory only if running SDL2 because SDL3 will handle it internally
-                    #ifndef USING_VERSION_SDL3
-                        SDL_free(event.drop.file);
-                    #endif
+                }
+
+                #if !defined(USING_VERSION_SDL3)
+                SDL_free(event.drop.file); // Only SDL2 needs to free, SDL3 keeps track internally
+                #endif
             } break;
 
             // Window events are also polled (minimized, maximized, close...)
